@@ -1,8 +1,7 @@
 const { DataTypes } = require("sequelize");
 const bcrypt = require("bcrypt");
 const { sequelize } = require("../config/db");
-const Country = require("./countryModel");
-const City = require("./cityModel");
+
 
 const User = sequelize.define(
   "User",
@@ -51,9 +50,22 @@ const User = sequelize.define(
       type: DataTypes.DATE,
       allowNull: true,
     },
+    magicLoginToken: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    magicLoginTokenExpires: {
+
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
     verified: {
       type: DataTypes.BOOLEAN,
       defaultValue: false
+    },
+    verified_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
   },
   {

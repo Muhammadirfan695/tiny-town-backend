@@ -1,15 +1,23 @@
 const bcrypt = require('bcrypt');
 const { generateToken } = require("../utils");
 
-verifyPassword = async (plain, hash) => {
+const verifyPassword = async (plain, hash) => {
   return bcrypt.compare(plain, hash);
 };
 
-createAuthToken = (userId, role) => {
+const createAuthToken = (userId, role) => {
   return generateToken(userId, role);
 };
 
+const generateMagicLink = (token) => {
+
+  const client_url = process.env.CLIENT_URL
+  return `${client_url}?token=${token}`;
+}
+
+
 module.exports = {
   verifyPassword,
-  createAuthToken
+  createAuthToken,
+  generateMagicLink
 }

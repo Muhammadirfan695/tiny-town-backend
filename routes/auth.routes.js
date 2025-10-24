@@ -1,9 +1,12 @@
 const express = require("express");
-const { login } = require("../controllers/auth.controller");
-const { apiKeyAuth } = require("../middleware/authMiddleware");
+const { login, magicLinkLogin, verifyMagicLinkToLogin, forgotPassword, resetPassword, changePassword } = require("../controllers/auth.controller");
+const { apiKeyAuth, protect } = require("../middleware/authMiddleware");
 const router = express.Router();
 
-
-router.post('/login', apiKeyAuth ,login);
-
+router.post('/login', apiKeyAuth, login);
+router.post('/magic-link', apiKeyAuth, magicLinkLogin);
+router.post('/magic-login', apiKeyAuth, verifyMagicLinkToLogin);
+router.post('/forgot-password', apiKeyAuth, forgotPassword);
+router.post('/reset-password', apiKeyAuth, resetPassword);
+router.post('/change-password', apiKeyAuth, protect, changePassword);
 module.exports = router;

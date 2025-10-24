@@ -2,10 +2,10 @@ const { emailTranslations } = require("../utils");
 const { sendEmail } = require("../utils/sendEmail");
 
 exports.sendResetOtpEmail = async (to, otp, lang = "en") => {
-    const t = emailTranslations[lang]?.passwordReset || emailTranslations.en.passwordReset;
-    const appLogoUrl = `${process.env.BASE_URL}public/assets/bdaybee-header-logo.svg`;
-    console.log("appLogoUrl", appLogoUrl)
-    const htmlMessage = `
+  const t = emailTranslations[lang]?.passwordReset || emailTranslations.en.passwordReset;
+  const appLogoUrl = `${process.env.BASE_URL}public/assets/bdaybee-header-logo.svg`;
+  console.log("appLogoUrl", appLogoUrl)
+  const htmlMessage = `
       <!DOCTYPE html>
       <html lang="${lang}">
       <head>
@@ -66,42 +66,42 @@ exports.sendResetOtpEmail = async (to, otp, lang = "en") => {
       </body>
       </html>
     `;
-    //     const htmlMessage = `
-    //     <!DOCTYPE html>
-    //     <html lang="${lang}">
-    //     <head>
-    //       <meta charset="UTF-8">
-    //       <title>${t.subject}</title>
-    //     </head>
-    //     <body style="font-family: Arial, sans-serif; text-align: center; color: #333; padding: 20px;">
-    //       <div style="max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; border-radius: 10px;">
-    //         <h2 style="color: #0056b3;">${t.heading}</h2>
-    //         <p>${t.message}</p>
-    //         <p><strong>${otp}</strong></p>
-    //         <p style="margin-top: 20px;">${t.expires}</p>
-    //       </div>
-    //     </body>
-    //     </html>
-    //   `;
+  //     const htmlMessage = `
+  //     <!DOCTYPE html>
+  //     <html lang="${lang}">
+  //     <head>
+  //       <meta charset="UTF-8">
+  //       <title>${t.subject}</title>
+  //     </head>
+  //     <body style="font-family: Arial, sans-serif; text-align: center; color: #333; padding: 20px;">
+  //       <div style="max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; border-radius: 10px;">
+  //         <h2 style="color: #0056b3;">${t.heading}</h2>
+  //         <p>${t.message}</p>
+  //         <p><strong>${otp}</strong></p>
+  //         <p style="margin-top: 20px;">${t.expires}</p>
+  //       </div>
+  //     </body>
+  //     </html>
+  //   `;
 
 
 
-    return await sendEmail({
-        to,
-        subject: t.subject,
-        message: t.text(otp),
-        text: t.text(otp),
-        html: htmlMessage,
-    });
+  return await sendEmail({
+    to,
+    subject: t.subject,
+    message: t.text(otp),
+    text: t.text(otp),
+    html: htmlMessage,
+  });
 };
 
 
 exports.sendWelcomeEmailWithOtp = async (to, otp, lang) => {
-    const t = emailTranslations[lang]?.welcome || emailTranslations.en.welcome;
+  const t = emailTranslations[lang]?.welcome || emailTranslations.en.welcome;
 
-    const appLogoUrl = `${process.env.BASE_URL}public/assets/bdaybee-header-logo.svg`;
-    console.log("appLogoUrl", appLogoUrl)
-    const htmlMessage = `
+  const appLogoUrl = `${process.env.BASE_URL}public/assets/bdaybee-header-logo.svg`;
+  console.log("appLogoUrl", appLogoUrl)
+  const htmlMessage = `
       <!DOCTYPE html>
       <html lang="${lang}">
       <head>
@@ -163,11 +163,90 @@ exports.sendWelcomeEmailWithOtp = async (to, otp, lang) => {
       </html>
     `;
 
-    return await sendEmail({
-        to,
-        subject: t.subject,
-        text: t.text(otp),
-        message: t.text(otp),
-        html: htmlMessage,
-    });
+  return await sendEmail({
+    to,
+    subject: t.subject,
+    text: t.text(otp),
+    message: t.text(otp),
+    html: htmlMessage,
+  });
+};
+
+
+const sendMagicLink = async (to, link) => {
+  if (!to || !link) throw new Error("Recipient and link are required");
+
+  const htmlMessage = `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Magic Link to Login</title>
+    <style>
+      body { font-family: Arial, sans-serif; text-align: center; color: #333; padding: 20px; background-color: #f8f9fa; }
+      .container { max-width: 600px; margin: auto; background: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 10px; }
+      h2 { color: #0056b3; margin-top: 10px; }
+      .link { font-size: 18px; font-weight: bold; color: #222; word-break: break-all; }
+      .footer { font-size: 13px; color: #777; margin-top: 30px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Magic Link</h2>
+      <p>Click the link below to login:</p>
+      <p class="link"><a href="${link}">${link}</a></p>
+      <p class="footer">This link will expire shortly. Do not share it with anyone.</p>
+    </div>
+  </body>
+  </html>
+  `;
+
+  return await sendEmail({
+    to,
+    subject: "Your Magic Login Link",
+    text: `Use this link to login: ${link}`,
+    html: htmlMessage,
+  });
+};
+
+
+const sendOTPtoResetPassword = async (to, otp) => {
+  if (!to || !otp) throw new Error("Recipient and otp are required");
+
+  const htmlMessage = `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Code to Reset Password</title>
+    <style>
+      body { font-family: Arial, sans-serif; text-align: center; color: #333; padding: 20px; background-color: #f8f9fa; }
+      .container { max-width: 600px; margin: auto; background: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 10px; }
+      h2 { color: #0056b3; margin-top: 10px; }
+      .link { font-size: 18px; font-weight: bold; color: #222; word-break: break-all; }
+      .footer { font-size: 13px; color: #777; margin-top: 30px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>OTP</h2>
+      <p>Use the otp in below to reset password</p>
+      <p class="link">${otp}</p>
+      <p class="footer">This otp will expire shortly. Do not share it with anyone.</p>
+    </div>
+  </body>
+  </html>
+  `;
+
+  return await sendEmail({
+    to,
+    subject: "Your Reset Code",
+    text: `Use this code to reset: ${otp}`,
+    html: htmlMessage,
+  });
+};
+
+module.exports = {
+  sendMagicLink,
+  sendOTPtoResetPassword
 };
