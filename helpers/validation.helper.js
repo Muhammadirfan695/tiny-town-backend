@@ -1,8 +1,14 @@
-exports.validatePassword = (password) => {
+const validatePassword = (password) => {
     const regex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
     return regex.test(password);
 };
 
-exports.passwordsMatch = (password, confirmPassword) => {
+const passwordsMatch = (password, confirmPassword) => {
     return password === confirmPassword;
 };
+
+
+module.exports = {
+    validatePassword,
+    passwordsMatch
+}
