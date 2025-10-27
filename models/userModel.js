@@ -67,10 +67,15 @@ const User = sequelize.define(
       type: DataTypes.DATE,
       allowNull: true,
     },
+    deletedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
     timestamps: true,
     freezeTableName: true,
+    paranoid: true,
     hooks: {
       beforeCreate: async (user) => {
         if (user.email) user.email = user.email.toLowerCase();

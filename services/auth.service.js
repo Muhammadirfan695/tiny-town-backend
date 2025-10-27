@@ -2,10 +2,14 @@
 const { verifyPassword, createAuthToken, generateMagicLink } = require("../helpers/auth.helper");
 const { success, error } = require("../helpers/response.helper");
 const { passwordsMatch } = require("../helpers/validation.helper");
-const { generateOTP } = require("../utils");
+const { sequelize } = require("../models");
 const { sendMagicLink, sendOTPtoResetPassword } = require("./email.service");
-const { getUserRole } = require("./role.service");
-const { isActive, findByEmail, generateMagicToken, findByMagicLink, clearMagicLinkToken, generateUserResetToken, findUserByResetToken, updateUserPassword, findUserById } = require("./user.service");
+const {  getRoleByName, assignRole, getAllUserRolesById } = require("./role.service");
+const { isActive, findByEmail, generateMagicToken,
+    findByMagicLink, clearMagicLinkToken, generateUserResetToken,
+    findUserByResetToken, updateUserPassword, findUserById,
+    emailExists, createUser, 
+    createOtpWithExpiry} = require("./user.service");
 
 
 
@@ -28,7 +32,7 @@ const loginService = async (email, password) => {
         return error("Invalid Credentials", 403);
     }
 
-    const roleName = await getUserRole(user.id);
+    const roleName = await getAllUserRolesById(user.id);
     const token = createAuthToken(user.id, roleName);
 
     const { password: _, ...userData } = user.toJSON();
@@ -68,7 +72,7 @@ const loginWithMagicLink = async (token) => {
         return error("Invalid or expired magic link", 400);
     }
     await clearMagicLinkToken(user)
-    const roleName = await getUserRole(user.id);
+    const roleName = await getAllUserRolesById(user.id);
     const authToken = createAuthToken(user.id, roleName);
     const { password: _, ...userData } = user.toJSON();
     return success("Login Successfully", {
@@ -88,8 +92,8 @@ const forgotPasswordService = async (email) => {
     if (!user) {
         return error("No User Found", 404);
     }
-    const otp = generateOTP();
-    const expires = new Date(Date.now() + 10 * 60 * 1000);
+    
+    const { otp, expires } = createOtpWithExpiry();
     await generateUserResetToken(user, otp, expires);
 
     await sendOTPtoResetPassword(email, otp);
@@ -148,11 +152,51 @@ const changePasswordService = async (id, currentPassword, password, confirmPassw
     }
 };
 
+
+
+
+const createUserService = async (data) => {
+    try {
+        if (!data.firstName || !data.lastName || !data.email || !data.role) {
+
+            return error("First Name, Last Name, Email and Role are Required", 400);
+        }
+
+        const existingUser = await emailExists(data.email);
+        if (existingUser) {
+            return error("User already exists", 400);
+        }
+
+        const role = await getRoleByName(data.role);
+        if (!role) {
+            return error(`Role "${data.role}" does not exist`, 400);
+        }
+
+        const user = await createUser(data);
+
+        await assignRole(user.id, role.id,);
+
+        const token = await generateMagicToken(user.email);
+
+        const link = generateMagicLink(token);
+
+        await sendMagicLink(user.email, link);
+
+
+        return success("User created and Magic Link Sent Successfully", { link });
+
+    } catch (err) {
+        console.error(err);
+        return error(err.message || "Failed to create user", 500);
+    }
+};
+
 module.exports = {
     loginService,
     loginMagicLink,
     loginWithMagicLink,
     forgotPasswordService,
     resetPasswordService,
-    changePasswordService
+    changePasswordService,
+    createUserService
 }

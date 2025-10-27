@@ -46,5 +46,6 @@ module.exports = {
   Role,
   UserRole,
   Country,
-  City
+  City,
+  Attachment
 };
