@@ -9,10 +9,10 @@ const updateProfile = asyncHandler(async (req, res) => {
         const id = req.userId;
         if (!id) return handleResponse(res, error("User ID missing from token", 401));
 
-        const { firstName, lastName, email, roles } = req.body;
+        const { firstName, lastName, email, roles,phone } = req.body;
 
         const result = await updateUserProfileService(
-            { id, firstName, lastName, email, roles },
+            { id, firstName, lastName, email, roles ,phone},
             req.file
         );
 

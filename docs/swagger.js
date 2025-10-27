@@ -1196,6 +1196,10 @@
  *                 type: string
  *                 example: john.doe@example.com
  *                 description: New email address (local users only)
+ *               phone:
+ *                 type: string
+ *                 example: "+1 234 567 890"
+ *                 description: User's phone number
  *               roles:
  *                 type: array
  *                 items:
@@ -1240,6 +1244,9 @@
  *                     email:
  *                       type: string
  *                       example: john.doe@example.com
+ *                     phone:
+ *                       type: string
+ *                       example: "+1 234 567 890"
  *                     roles:
  *                       type: array
  *                       items:
