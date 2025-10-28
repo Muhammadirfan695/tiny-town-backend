@@ -218,38 +218,40 @@ const resetPasswordService = async (otp, password, confirmPassword) => {
 
 const changePasswordService = async (
   id,
-  currentPassword,
+  currentPassword, 
   password,
   confirmPassword
 ) => {
-    console.log("id",id);
-    
   try {
-    if (( !password || !confirmPassword)) {
-      return error(
-        "Current Password, Password and Confirm Password are required",
-        400
-      );
+    if (!password || !confirmPassword) {
+      return error("New Password and Confirm Password are required", 400);
     }
+
     const user = await findUserById(id);
     if (!user) {
-      return error("No User Found", 404);
+      return error("User not found", 404);
     }
-    const match = await verifyPassword(currentPassword, user.password);
-    if (!match) {
-      return error("Invalid Password", 403);
+
+
+    if (currentPassword) {
+      const isMatch = await verifyPassword(currentPassword, user.password);
+      if (!isMatch) {
+        return error("Your current password is incorrect.", 403);
+      }
     }
-    const isMatch = passwordsMatch(password, confirmPassword);
-    if (!isMatch) {
-      return error("Password and Confirm Password do not match", 400);
+  
+    const doPasswordsMatch = passwordsMatch(password, confirmPassword);
+    if (!doPasswordsMatch) {
+      return error("New password and confirmation do not match.", 400);
     }
 
     await updateUserPassword(user, password);
 
-    return success("Password reset successfully", 200);
+    return success("Password changed successfully", 200);
+
   } catch (err) {
-    console.error("resetPasswordService error:", err);
-    return error("Something went wrong", 500);
+    console.error("changePasswordService error:", err);
+    return error("An internal server error occurred.", 500);
   }
 };
 
