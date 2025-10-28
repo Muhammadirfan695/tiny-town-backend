@@ -30,7 +30,7 @@ const initializeDatabase = async () => {
     console.log('✅ PostgreSQL connected successfully');
 
     if (process.env.NODE_ENV === 'development' && process.env.DB_SYNC === 'true') {
-      await sequelize.sync({ force: true }); 
+      // await sequelize.sync({ force: true }); 
       console.log('✅ Database FORCED sync complete. Tables recreated.');
     }
 
