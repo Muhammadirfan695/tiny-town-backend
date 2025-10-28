@@ -10,12 +10,13 @@ const login = asyncHandler(async (req, res) => {
     handleResponse(res, result);
 });
 
+
 const magicLinkLogin = asyncHandler(async (req, res) => {
-    const { email } = req.body;
-    const result = await loginMagicLink(email);
+ 
+    const { email } = req.body; 
+    const result = await loginMagicLink(email); 
     handleResponse(res, result);
 });
-
 const verifyMagicLinkToLogin = asyncHandler(async (req, res) => {
     const { token } = req.body;
     const result = await loginWithMagicLink(token);

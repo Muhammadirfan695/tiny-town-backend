@@ -83,7 +83,7 @@ app.get("/", async (req, res) => {
 });
 app.use("/api/auth", authRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/users', userRoutes);
+app.use('/api/user', userRoutes);
 // ========================
 // Database & Server Start
 // ========================

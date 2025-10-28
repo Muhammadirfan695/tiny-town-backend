@@ -32,7 +32,7 @@ exports.socialLoginService = async (token, provider, lang = "en") => {
 
     const userJson = user.toJSON();
     if (userJson.avatar && !/^https?:\/\//i.test(userJson.avatar)) {
-      userJson.avatar = `${process.env.BASE_URL}${userJson.avatar}`;
+      userJson.avatar = `${process.env.CLIENT_URL}${userJson.avatar}`;
     }
 
     return success("Social Login Successfull", {
