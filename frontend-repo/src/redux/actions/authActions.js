@@ -31,11 +31,8 @@ export const loginAction = (credentials, router) => async (dispatch) => {
     localStorage.setItem("lunchfinder_user", JSON.stringify(userData));
 
     SuccessToast("Login Successful! Redirecting...");
-
-    setTimeout(() => {
-      // router.push('/');
-      router.push("/dashboard");
-    }, 1500);
+    router.push("/dashboard");
+  
   } catch (error) {
     const errorMessage =
       error.response?.data?.message || "Invalid credentials or server error.";
@@ -85,7 +82,7 @@ export const resetPasswordAction = (data, router) => async (dispatch) => {
 export const requestMagicLinkAction = (email) => async (dispatch) => {
   try {
     dispatch(loginRequest());
-    await requestMagicLinkApi(email); 
+    await requestMagicLinkApi(email);
     dispatch(loginFailure(null));
 
     SuccessToast("Magic Link sent! Please check your email.");

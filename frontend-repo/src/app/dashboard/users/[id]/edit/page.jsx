@@ -13,8 +13,8 @@ import withAuth from "@/authentication/withAuth";
 function EditUserPage() {
   const dispatch = useDispatch();
   const router = useRouter();
-  const params = useParams(); 
-  const { id: userId } = params; 
+  const params = useParams();
+  const { id: userId } = params;
 
   const { user: adminUser } = useSelector((state) => state.auth);
   const { loading } = useSelector((state) => state.auth);
@@ -129,5 +129,4 @@ function EditUserPage() {
   );
 }
 
-export default withAuth(EditUserPage, { roles: ['Admin'] });
-
+export default withAuth(EditUserPage, { roles: ["Admin"] });

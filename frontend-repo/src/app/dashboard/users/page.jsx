@@ -20,13 +20,16 @@ function UsersListPage() {
   const { users, loading, currentPage, totalPages } = useSelector(
     (state) => state.users
   );
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
+
   useEffect(() => {
     if (loggedInUser?.token) {
       dispatch(getAllUsersAction(loggedInUser.token, currentPage));
     }
   }, [dispatch, loggedInUser, currentPage]);
+
   const handlePageChange = (page) => {
     if (page !== currentPage) {
       if (loggedInUser?.token) {
@@ -34,10 +37,12 @@ function UsersListPage() {
       }
     }
   };
+
   const handleDeleteClick = (userId) => {
     setUserToDelete(userId);
     setIsModalOpen(true);
   };
+
   const confirmDelete = () => {
     if (userToDelete && loggedInUser?.token) {
       dispatch(deleteUserAction(userToDelete, loggedInUser.token));
@@ -50,19 +55,22 @@ function UsersListPage() {
     setUserToDelete(null);
   };
 
- 
- if (loading) {
+  const filteredUsers = Array.isArray(users)
+    ? users.filter((user) => user.id !== loggedInUser?.id)
+    : [];
+
+  if (loading && !users.length) {
     return (
-        <div className="flex items-center justify-center h-64">
-            <Loader size="12" />
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <Loader size="12" />
+      </div>
     );
   }
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">User Management</h1>
-
         {loggedInUser?.role === "Admin" && (
           <Link
             href="/dashboard/users/create"
@@ -92,8 +100,8 @@ function UsersListPage() {
             </tr>
           </thead>
           <tbody>
-            {users && users.length > 0 ? (
-              users.map((user) => (
+            {filteredUsers && filteredUsers.length > 0 ? (
+              filteredUsers.map((user) => (
                 <tr key={user.id} className="border-b hover:bg-gray-50">
                   <td className="p-4">
                     {user.firstName} {user.lastName}
@@ -101,7 +109,6 @@ function UsersListPage() {
                   <td className="p-4">{user.email}</td>
                   <td className="p-4">{user.Roles?.[0]?.name || "N/A"}</td>
                   <td className="p-4 flex gap-4 items-center">
-                 
                     {loggedInUser?.role === "Admin" && (
                       <>
                         <Link
@@ -124,7 +131,7 @@ function UsersListPage() {
             ) : (
               <tr>
                 <td colSpan="4" className="p-4 text-center text-gray-500">
-                  No users found.
+                  No other users found.
                 </td>
               </tr>
             )}
@@ -137,15 +144,15 @@ function UsersListPage() {
         totalPages={totalPages}
         onPageChange={handlePageChange}
       />
+
       <ConfirmationModal
         isOpen={isModalOpen}
         onClose={closeModal}
         onConfirm={confirmDelete}
+        message="Are you sure you want to delete this user? This action cannot be undone."
       />
     </div>
   );
 }
 
-
-export default withAuth(UsersListPage, { roles: ['Admin'] });
-
+export default withAuth(UsersListPage, { roles: ["Admin"] });
