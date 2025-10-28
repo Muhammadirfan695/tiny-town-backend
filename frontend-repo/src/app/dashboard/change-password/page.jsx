@@ -35,7 +35,7 @@ function ChangePasswordPage() {
               type="password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              required
+              // required
               className="w-full mt-1 p-2 border rounded-md"
             />
           </div>
