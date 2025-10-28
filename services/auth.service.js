@@ -233,7 +233,7 @@ const changePasswordService = async (
     }
 
 
-    if (currentPassword) {
+    if (user.password) {
       const isMatch = await verifyPassword(currentPassword, user.password);
       if (!isMatch) {
         return error("Your current password is incorrect.", 403);
