@@ -1,9 +1,10 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import { loginWithTokenAction } from '@/redux/actions/authActions';
+import { FullPageLoader } from '../app/components/common/Loader';
 
 const AuthContext = createContext(null);
 
@@ -22,12 +23,10 @@ const getInitialUser = () => {
     return null;
 };
 
-export function ProvideAuth({ children }) {
-    const [user, setUser] = useState(getInitialUser);
+function AuthTokenHandler() {
     const router = useRouter();
     const dispatch = useDispatch();
-    const searchParams = useSearchParams(); 
-
+    const searchParams = useSearchParams();
 
     useEffect(() => {
         const token = searchParams.get('token');
@@ -36,6 +35,12 @@ export function ProvideAuth({ children }) {
         }
     }, [searchParams, dispatch, router]);
 
+    return null; 
+}
+
+export function ProvideAuth({ children }) {
+    const [user, setUser] = useState(getInitialUser);
+    const router = useRouter();
 
     const logout = () => {
         localStorage.removeItem('lunchfinder_user');
@@ -46,10 +51,17 @@ export function ProvideAuth({ children }) {
     const value = {
         user,
         isAuthenticated: !!user,
-        logout, 
+        logout,
     };
 
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    return (
+        <AuthContext.Provider value={value}>
+            <Suspense fallback={<FullPageLoader />}>
+                <AuthTokenHandler />
+            </Suspense>
+            {children}
+        </AuthContext.Provider>
+    );
 }
 
 export function useAuth() {

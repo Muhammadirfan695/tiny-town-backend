@@ -1,16 +1,14 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useSelector } from 'react-redux';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FullPageLoader } from './components/common/Loader';
 
-
-export default function HomePage() {
+function HomeLogic() {
   const { isAuthenticated } = useSelector((state) => state.auth);
   const router = useRouter();
-  const searchParams = useSearchParams(); 
-
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     const token = searchParams.get('token');
@@ -23,19 +21,13 @@ export default function HomePage() {
     }
   }, [isAuthenticated, searchParams, router]);
 
-  
   return <FullPageLoader />;
+}
 
-  // return (
-  //   <div style={{
-  //       display: 'flex',
-  //       justifyContent: 'center',
-  //       alignItems: 'center',
-  //       height: '100vh',
-  //       backgroundColor: '#f9fafb',
-  //       fontFamily: 'sans-serif'
-  //   }}>
-  //     <p>Loading...</p> 
-  //   </div>
-  // );
+export default function HomePage() {
+  return (
+    <Suspense fallback={<FullPageLoader />}>
+      <HomeLogic />
+    </Suspense>
+  );
 }
