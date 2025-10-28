@@ -6,6 +6,9 @@ const Country = require("./countryModel");
 const City = require('./cityModel');
 const UserRole = require("./userRoleModel");
 const Attachment = require("./attachmentModel");
+const Restaurant = require("./restaurantModel");
+const ManagerRestaurant = require("./managerRestaurantModel");
+
 
 User.belongsToMany(Role, {
   through: UserRole,
@@ -40,11 +43,26 @@ User.hasMany(Attachment, {
   as: "attachments",
 });
 
+User.hasMany(Restaurant, { foreignKey: 'owner_id', as: 'OwnedRestaurants' });
+Restaurant.belongsTo(User, { as: 'Owner', foreignKey: 'owner_id' });
+
+User.hasMany(Restaurant, { foreignKey: 'manager_id', as: 'ManagedRestaurants' });
+Restaurant.belongsTo(User, { as: 'Manager', foreignKey: 'manager_id' })
+Restaurant.hasMany(Attachment, {
+  foreignKey: "model_id",
+  constraints: false,
+  scope: { model_type: "Restaurant" },
+  as: "attachments", 
+});
+
 module.exports = {
   sequelize,
   User,
   Role,
   UserRole,
   Country,
-  City
+  City,
+  Attachment,
+    Restaurant,         
+  // ManagerRestaurant 
 };

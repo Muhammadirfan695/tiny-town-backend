@@ -246,7 +246,44 @@ const sendOTPtoResetPassword = async (to, otp) => {
   });
 };
 
+const sendOTPtoVerify = async (to, otp) => {
+  if (!to || !otp) throw new Error("Recipient and otp are required");
+
+  const htmlMessage = `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Code to Verify Account</title>
+    <style>
+      body { font-family: Arial, sans-serif; text-align: center; color: #333; padding: 20px; background-color: #f8f9fa; }
+      .container { max-width: 600px; margin: auto; background: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 10px; }
+      h2 { color: #0056b3; margin-top: 10px; }
+      .link { font-size: 18px; font-weight: bold; color: #222; word-break: break-all; }
+      .footer { font-size: 13px; color: #777; margin-top: 30px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>OTP</h2>
+      <p>Use the otp in below to verify your account</p>
+      <p class="link">${otp}</p>
+      <p class="footer">This otp will expire shortly. Do not share it with anyone.</p>
+    </div>
+  </body>
+  </html>
+  `;
+
+  return await sendEmail({
+    to,
+    subject: "Your Verification Code",
+    text: `Use this code to verify: ${otp}`,
+    html: htmlMessage,
+  });
+};
+
 module.exports = {
   sendMagicLink,
-  sendOTPtoResetPassword
+  sendOTPtoResetPassword,
+  sendOTPtoVerify
 };

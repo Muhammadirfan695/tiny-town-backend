@@ -33,7 +33,7 @@ const User = sequelize.define(
       allowNull: true,
     },
     avatar: { type: DataTypes.TEXT, allowNull: true },
-
+    phone: { type: DataTypes.STRING, allowNull: true },
     resetPasswordToken: {
       type: DataTypes.STRING,
       allowNull: true,
@@ -67,10 +67,15 @@ const User = sequelize.define(
       type: DataTypes.DATE,
       allowNull: true,
     },
+    deletedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
     timestamps: true,
     freezeTableName: true,
+    paranoid: true,
     hooks: {
       beforeCreate: async (user) => {
         if (user.email) user.email = user.email.toLowerCase();

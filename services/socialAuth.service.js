@@ -1,7 +1,7 @@
 const { success, error } = require("../helpers/response.helper");
 const { generateToken, MESSAGE_LIST } = require("../utils");
 const { findByProvider, findByEmail, emailExists } = require("./user.service");
-const { getUserRole, getRoleByName } = require("./role.service");
+const { getAllUserRolesById, getRoleByName } = require("./role.service");
 const { verifySocialToken } = require("../utils/socialVerifier");
 const { sequelize } = require("../models");
 
@@ -26,7 +26,7 @@ exports.socialLoginService = async (token, provider, lang = "en") => {
       }
     }
 
-    const roleName = await getUserRole(user.id);
+    const roleName = await getAllUserRolesById(user.id);
 
     const jwtToken = generateToken(user.id, roleName);
 

@@ -1,8 +1,6 @@
 
 const asyncHandler = require('express-async-handler');
-// const { loginService, signupService, forgotPasswordService, resetPasswordService, changePasswordService, verifyOtpService, resendOtpService } = require('../services/auth.service');
 const { handleResponse } = require('../helpers/response.helper');
-// const { socialLoginService, socialSignup } = require('../services/socialAuth.service');
 const { loginService, loginMagicLink, loginWithMagicLink, forgotPasswordService, resetPasswordService, changePasswordService } = require('../services/auth.service');
 
 
@@ -12,12 +10,13 @@ const login = asyncHandler(async (req, res) => {
     handleResponse(res, result);
 });
 
+
 const magicLinkLogin = asyncHandler(async (req, res) => {
-    const { email } = req.body;
-    const result = await loginMagicLink(email);
+ 
+    const { email } = req.body; 
+    const result = await loginMagicLink(email); 
     handleResponse(res, result);
 });
-
 const verifyMagicLinkToLogin = asyncHandler(async (req, res) => {
     const { token } = req.body;
     const result = await loginWithMagicLink(token);
