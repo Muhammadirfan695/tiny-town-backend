@@ -222,8 +222,10 @@ const changePasswordService = async (
   password,
   confirmPassword
 ) => {
+    console.log("id",id);
+    
   try {
-    if ((!currentPassword, !password || !confirmPassword)) {
+    if (( !password || !confirmPassword)) {
       return error(
         "Current Password, Password and Confirm Password are required",
         400
