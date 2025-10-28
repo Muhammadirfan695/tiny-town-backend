@@ -218,7 +218,7 @@ const resetPasswordService = async (otp, password, confirmPassword) => {
 
 const changePasswordService = async (
   id,
-  currentPassword, // Yeh null/undefined ho sakta hai
+  currentPassword, 
   password,
   confirmPassword
 ) => {
