@@ -26,6 +26,18 @@
  *   description: API to manage countries
  */
 
+/**
+ * @swagger
+ * tags:
+ *   name: Dish
+ *   description: API to manage Dishes
+ */
+/**
+ * @swagger
+ * tags:
+ *   name: Restaurant
+ *   description: Restaurant management 
+ */
 
 /**
  * @swagger
@@ -49,14 +61,14 @@
  * @swagger
  * components:
  *   securitySchemes:
- *     ApiKeyAuth:
- *       type: apiKey
- *       in: header
- *       name: X-API-KEY
  *     AdminApiKeyAuth:
  *       type: apiKey
  *       in: header
  *       name: X-API-ADMIN-KEY
+ *     ApiKeyAuth:
+ *       type: apiKey
+ *       in: header
+ *       name: X-API-KEY
  *     bearerAuth:
  *       type: http
  *       scheme: bearer
@@ -90,6 +102,51 @@
  *           format: uri
  */
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Dish:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         name:
+ *           type: string
+ *         description:
+ *           type: string
+ *         price:
+ *           type: number
+ *         quantity:
+ *           type: string
+ *         validity_start:
+ *           type: string
+ *           format: date
+ *         validity_end:
+ *           type: string
+ *           format: date
+ *         published:
+ *           type: boolean
+ *         menus:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: string
+ *               name:
+ *                 type: string
+ *         attachments:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: string
+ *               path:
+ *                 type: string
+ */
 
 
 /**

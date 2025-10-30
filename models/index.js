@@ -1,13 +1,17 @@
 const { sequelize } = require("../config/db");
 
-const User = require("./userModel");
-const Role = require("./roleModel");
+const User = require("./user.model");
+const Role = require("./role.model");
 const Country = require("./countryModel");
 const City = require('./cityModel');
-const UserRole = require("./userRoleModel");
-const Attachment = require("./attachmentModel");
-const Restaurant = require("./restaurantModel");
-const ManagerRestaurant = require("./managerRestaurantModel");
+const UserRole = require("./userRole.model");
+const Attachment = require("./attachment.model");
+const Restaurant = require("./restaurant.model");
+const ManagerRestaurant = require("./managerRestaurant.model");
+const Dish = require("./dish.model");
+const Menu = require("./menu.model");
+const RestaurantMenu = require("./restaurantMenu.model");
+const MenuDish = require("./menuDish.model");
 
 
 User.belongsToMany(Role, {
@@ -52,7 +56,44 @@ Restaurant.hasMany(Attachment, {
   foreignKey: "model_id",
   constraints: false,
   scope: { model_type: "Restaurant" },
-  as: "attachments", 
+  as: "attachments",
+});
+
+Restaurant.belongsToMany(Menu, {
+  through: RestaurantMenu,
+  foreignKey: "restaurant_id",
+  otherKey: "menu_id",
+});
+
+Menu.belongsToMany(Restaurant, {
+  through: RestaurantMenu,
+  foreignKey: "menu_id",
+  otherKey: "restaurant_id",
+});
+
+Dish.hasMany(Attachment, {
+  foreignKey: "model_id",
+  constraints: false,
+  scope: { model_type: "Dish" },
+  as: 'attachments'
+})
+Attachment.belongsTo(Dish, {
+  foreignKey: "model_id",
+  constraints: false,
+  as: "dishAttachment",
+  scope: { model_type: "Dish" },
+});
+
+Menu.belongsToMany(Dish, {
+  through: MenuDish,
+  foreignKey: "menu_id",
+  otherKey: "dish_id",
+});
+
+Dish.belongsToMany(Menu, {
+  through: MenuDish,
+  foreignKey: "dish_id",
+  otherKey: "menu_id",
 });
 
 module.exports = {
@@ -63,6 +104,10 @@ module.exports = {
   Country,
   City,
   Attachment,
-    Restaurant,         
+  Restaurant,
+  Dish,
+  RestaurantMenu,
+  Menu,
+  MenuDish
   // ManagerRestaurant 
 };

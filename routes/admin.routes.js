@@ -3,6 +3,8 @@ const { apiKeyAuth, authorize } = require("../middleware/authMiddleware");
 const { createUser, getUserById, UpdateUser, getAllUsers, deleteUser, restoreUser } = require("../controllers/admin.controller");
 const { upload } = require("../utils/uploadImage");
 const restaurantRoutes = require('./restaurant.routes'); 
+const { createRestaurantValidationRules, validate } = require("../validations/restaurant.validator");
+const { createRestaurant, deleteRestaurant } = require("../controllers/restaurant.controller");
 
 const router = express.Router();
 
@@ -14,4 +16,19 @@ router.delete('/user/:id', apiKeyAuth, authorize("Admin"), deleteUser);
 router.post('/user/:id', apiKeyAuth, authorize("Admin"), restoreUser);
 
 router.use('/restaurants', restaurantRoutes); 
+
+
+router.post(
+    '/',
+    authorize('Admin'),
+    upload.fields([
+        { name: 'logo', maxCount: 1 },
+        { name: 'header_image', maxCount: 1 }
+    ]),
+    apiKeyAuth,
+    createRestaurantValidationRules(),
+    validate,
+    createRestaurant
+);
+router.delete('/:id', apiKeyAuth, authorize('Admin'), deleteRestaurant);
 module.exports = router;

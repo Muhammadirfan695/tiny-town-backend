@@ -11,7 +11,8 @@ const { swaggerSpec, swaggerUi } = require("./swaggerconfig.js");
 const authRoutes = require('./routes/auth.routes.js')
 const adminRoutes = require('./routes/admin.routes.js')
 const userRoutes = require('./routes/user.routes.js')
-
+const dishRoutes = require('./routes/dish.routes.js')
+const restaurantRoutes = require('./routes/restaurant.routes.js')
 
 
 
@@ -84,6 +85,8 @@ app.get("/", async (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/dishes', dishRoutes);
+app.use('/api/restaurants',restaurantRoutes)
 // ========================
 // Database & Server Start
 // ========================
