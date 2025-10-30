@@ -452,6 +452,94 @@
 
 /**
  * @swagger
+ * /api/dishes/set-menus:
+ *   post:
+ *     summary: Assign menus to a dish
+ *     description: Assign one or more menus to a dish. This will replace any existing menus linked to the dish.
+ *     tags:
+ *       - Dish
+ *     security:
+ *       - ApiKeyAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - dishId
+ *               - menuIds
+ *             properties:
+ *               dishId:
+ *                 type: string
+ *                 format: uuid
+ *                 description: ID of the dish to update
+ *                 example: "b45f78e0-7f94-4d17-bc3a-91b56ef9923c"
+ *               menuIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: uuid
+ *                 description: Array of menu IDs to assign to the dish
+ *                 example: ["c1234567-89ab-4cde-9012-3456789abcd"]
+ *     responses:
+ *       200:
+ *         description: Menus assigned successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 succeeded:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Menus assigned to dish successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     dishId:
+ *                       type: string
+ *                       example: "b45f78e0-7f94-4d17-bc3a-91b56ef9923c"
+ *                     menuIds:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                         example: ["c1234567-89ab-4cde-9012-3456789abcd"]
+ *       404:
+ *         description: Dish not found or some menu IDs do not exist
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 succeeded:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Dish not found" 
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 succeeded:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Failed to assign menus to dish"
+ */
+
+
+
+
+/**
+ * @swagger
  * /api/dishes/dish/{id}:
  *   delete:
  *     summary: Delete a dish

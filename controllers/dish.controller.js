@@ -3,7 +3,7 @@ const asyncHandler = require('express-async-handler');
 const { createDishService, findDishById, getAllDishesService, updateDishService, deleteDishService } = require('../services/dish.service');
 
 const { sequelize } = require('../models');
-const { handleResponse } = require('../helpers/response.helper');
+const { handleResponse, error, success } = require('../helpers/response.helper');
 
 
 const createDish = asyncHandler(async (req, res) => {
@@ -125,9 +125,42 @@ const deleteDish = asyncHandler(async (req, res) => {
     handleResponse(res, result)
 });
 
+
+const setMenuToDish = asyncHandler(async (req, res) => {
+    const t = await sequelize.transaction();
+    try {
+        const { dishId, menuIds } = req.body;
+
+
+        const dish = await findDishById(dishId, t)
+        if (!dish) {
+            await t.rollback();
+            return error('Dish Not Found', 404)
+        }
+
+        const { valid, missingIds } = await validateMenusExistService(menuIds, t);
+        if (!valid) {
+            await t.rollback();
+            return error(`The following menu IDs do not exist: ${missingIds.join(", ")}`, 404)
+        }
+
+        await setDishMenusService(dish, menuIds, t);
+        await t.commit();
+        return success("Menus assigned to dish successfully",
+            { dishId, menuIds }, 200)
+
+    } catch (err) {
+        if (!t.finished) await t.rollback();
+        console.error(error);
+        return error("Failed to assign menus to dish", 500)
+
+    }
+});
+
 module.exports = {
     createDish,
     getDish,
     getAllDishes,
-    updateDish, deleteDish
+    updateDish, deleteDish,
+    setMenuToDish
 }
