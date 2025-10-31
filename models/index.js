@@ -10,7 +10,6 @@ const Restaurant = require("./restaurant.model");
 const ManagerRestaurant = require("./managerRestaurant.model");
 const Dish = require("./dish.model");
 const Menu = require("./menu.model");
-const RestaurantMenu = require("./restaurantMenu.model");
 const MenuDish = require("./menuDish.model");
 
 
@@ -59,18 +58,30 @@ Restaurant.hasMany(Attachment, {
   as: "attachments",
 });
 
-Restaurant.belongsToMany(Menu, {
-  through: RestaurantMenu,
+Restaurant.hasMany(Menu, {
   foreignKey: "restaurant_id",
-  otherKey: "menu_id",
+  as: "menus",
+  onDelete: "CASCADE",
 });
 
-Menu.belongsToMany(Restaurant, {
-  through: RestaurantMenu,
-  foreignKey: "menu_id",
-  otherKey: "restaurant_id",
+
+Menu.belongsTo(Restaurant, {
+  foreignKey: "restaurant_id",
+  as: "restaurant",
 });
 
+Menu.hasMany(Attachment, {
+  foreignKey: "model_id",
+  constraints: false,
+  scope: { model_type: "Menu" },
+  as: 'attachments'
+})
+Attachment.belongsTo(Menu, {
+  foreignKey: "model_id",
+  constraints: false,
+  as: "menuAttachment",
+  scope: { model_type: "Menu" },
+});
 Dish.hasMany(Attachment, {
   foreignKey: "model_id",
   constraints: false,
@@ -106,7 +117,6 @@ module.exports = {
   Attachment,
   Restaurant,
   Dish,
-  RestaurantMenu,
   Menu,
   MenuDish
   // ManagerRestaurant 

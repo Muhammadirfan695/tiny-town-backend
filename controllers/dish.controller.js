@@ -1,6 +1,6 @@
 const asyncHandler = require('express-async-handler');
 
-const { createDishService, findDishById, getAllDishesService, updateDishService, deleteDishService } = require('../services/dish.service');
+const { createDishService, findDishById, getAllDishesService, updateDishService, deleteDishService, setDishMenusService } = require('../services/dish.service');
 
 const { sequelize } = require('../models');
 const { handleResponse, error, success } = require('../helpers/response.helper');

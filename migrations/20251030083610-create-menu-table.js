@@ -1,8 +1,8 @@
-'use strict';
+"use strict";
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Menu', {
+    await queryInterface.createTable("Menu", {
       id: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
@@ -17,24 +17,40 @@ module.exports = {
         type: Sequelize.TEXT,
         allowNull: true,
       },
-      published: {
+      timingStart: {
+        type: Sequelize.TIME,
+        allowNull: false,
+      },
+      timingEnd: {
+        type: Sequelize.TIME,
+        allowNull: false,
+      },
+      status: {
         type: Sequelize.BOOLEAN,
-        defaultValue: true,
+        defaultValue: false,
+      },
+      restaurant_id: {
+        type: Sequelize.UUID,
+        allowNull: true,
+        references: {
+          model: "Restaurant",
+          key: "id",
+        },
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE",
       },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('NOW()'),
       },
       updatedAt: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('NOW()'),
       },
     });
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Menu');
+    await queryInterface.dropTable("Menu");
   },
 };

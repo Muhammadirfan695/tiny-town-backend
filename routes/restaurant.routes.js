@@ -12,12 +12,12 @@ const { createRestaurant,
 const { upload } = require('../utils/uploadImage');
 
 
-router.get('/', apiKeyAuth, authorize('Admin', 'Manager', 'Owner'), getAllRestaurants);
+router.get('/restaurant', apiKeyAuth, authorize('Admin', 'Manager', 'Owner'), getAllRestaurants);
 
-router.get('/:id', apiKeyAuth, authorize('Admin', 'Manager', 'Owner'), getRestaurantById);
+router.get('/restaurant/:id', apiKeyAuth, authorize('Admin', 'Manager', 'Owner'), getRestaurantById);
 
 router.patch(
-    '/:id', apiKeyAuth,
+    '/restaurant/:id', apiKeyAuth,
     authorize('Admin', 'Manager', 'Owner'),
     upload.fields([
         { name: 'logo', maxCount: 1 },

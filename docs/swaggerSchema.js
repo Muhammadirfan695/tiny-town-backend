@@ -32,6 +32,14 @@
  *   name: Dish
  *   description: API to manage Dishes
  */
+
+/**
+ * @swagger
+ * tags:
+ *   name: Menu
+ *   description: API to manage menus
+ */
+
 /**
  * @swagger
  * tags:

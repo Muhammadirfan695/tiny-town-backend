@@ -1,7 +1,4 @@
 const { body, param } = require("express-validator");
-const { error } = require("../helpers/response.helper");
-
-
 
 const createDishValidator = [
     body("name")
