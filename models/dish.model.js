@@ -21,7 +21,7 @@ const Dish = sequelize.define(
         allowNull: false,
       },
       quantity: {
-        type: DataTypes.STRING, // e.g. "2 persons", "800g"
+        type: DataTypes.STRING, 
         allowNull: true,
       },
       validity_start: {
@@ -35,6 +35,15 @@ const Dish = sequelize.define(
       published: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
+      },
+      restaurant_id: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        references: {
+          model: 'Restaurant',
+          key: 'id'
+        },
+        onDelete: "CASCADE",
       },
     },
     {

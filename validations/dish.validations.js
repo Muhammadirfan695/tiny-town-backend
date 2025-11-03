@@ -11,9 +11,10 @@ const createDishValidator = [
         .withMessage("Price is required.")
         .isFloat({ gt: 0 })
         .withMessage("Price must be a positive number."),
-    // body("menuIds")
-    //     .isArray({ min: 1 })
-    //     .withMessage("At least one menu ID is required."),
+    body("restaurant_id")
+        .notEmpty()
+        .isUUID()
+        .withMessage("Restaurant ID must be a valid UUID"),
     body("quantity")
         .optional()
         .isString()
@@ -79,6 +80,10 @@ const updateDishValidator = [
         .withMessage("Dish ID is required")
         .isUUID()
         .withMessage("Dish ID must be a valid UUID"),
+    body("restaurant_id")
+        .optional()
+        .isUUID()
+        .withMessage("Restaurant ID must be a valid UUID"),
     body("name")
         .optional()
         .isString()

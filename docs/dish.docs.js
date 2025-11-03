@@ -53,6 +53,9 @@
  *                   format: uuid
  *                 example: ["9b8d9f32-1c4b-45a7-9dbf-fc9a8b8c7a8e"]
  *                 description: List of menu IDs to assign this dish to
+ *               restaurant_id:
+ *                 type: string
+ *                 example: "9b8d9f32-1c4b-45a7-9dbf-fc9a8b8c7a8e"
  *               attachments:
  *                 type: array
  *                 items:
@@ -262,6 +265,11 @@
  *         schema:
  *           type: string
  *         description: Comma-separated menu IDs to filter dishes by menu
+ *       - in: query
+ *         name: restaurantId
+ *         schema:
+ *           type: string
+ *         description: Filter by restaurantId
  *     responses:
  *       200:
  *         description: Dishes fetched successfully
@@ -365,6 +373,9 @@
  *                   type: string
  *                   format: uuid
  *                 example: ["f54a89c7-2b3d-4e11-8b8c-6bb1f14dca64"]
+ *               restaurant_id:
+ *                 type: string
+ *                 example: "9b8d9f32-1c4b-45a7-9dbf-fc9a8b8c7a8e"
  *               attachments:
  *                 type: array
  *                 description: New image files to upload

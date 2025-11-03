@@ -1,5 +1,4 @@
 'use strict';
-
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('Dish', {
@@ -15,7 +14,6 @@ module.exports = {
       },
       description: {
         type: Sequelize.TEXT,
-        allowNull: true,
       },
       price: {
         type: Sequelize.FLOAT,
@@ -23,19 +21,26 @@ module.exports = {
       },
       quantity: {
         type: Sequelize.STRING,
-        allowNull: true, // e.g. "2 persons", "800g"
       },
       validity_start: {
         type: Sequelize.DATE,
-        allowNull: true,
       },
       validity_end: {
         type: Sequelize.DATE,
-        allowNull: true,
       },
       published: {
         type: Sequelize.BOOLEAN,
         defaultValue: false,
+      },
+      restaurant_id: {
+        type: Sequelize.UUID,
+        allowNull: true,
+        references: {
+          model: 'Restaurant',
+          key: 'id',
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
       },
       createdAt: {
         allowNull: false,
@@ -52,5 +57,5 @@ module.exports = {
 
   async down(queryInterface, Sequelize) {
     await queryInterface.dropTable('Dish');
-  },
+  }
 };

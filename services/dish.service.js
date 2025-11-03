@@ -1,8 +1,9 @@
 const { Op } = require("sequelize");
-const { Dish, Menu, Attachment, sequelize } = require("../models");
+const { Dish, Menu, Attachment, sequelize, Restaurant } = require("../models");
 const { error, success } = require("../helpers/response.helper");
 const { createAttachment, deleteAttachment, findAllAttachments } = require("./attachment.service");
 const { validateMenusExistService } = require("./menu.service");
+const { findRestaurantByIdService } = require("./restaurant.service");
 
 
 
@@ -24,6 +25,7 @@ const createDishService = async (data, files = null) => {
             validity_end,
             published,
             menuIds,
+            restaurant_id
         } = data;
         if (menuIds && menuIds.length > 0) {
             const { valid, missingIds } = await validateMenusExistService(menuIds, t);
@@ -32,7 +34,11 @@ const createDishService = async (data, files = null) => {
                 return error(`The following menu IDs do not exist: ${missingIds.join(", ")}`, 400)
             }
         }
-
+        const restaurant = await findRestaurantByIdService(restaurant_id)
+        if (!restaurant) {
+            await t.rollback();
+            return error('No Restaurant Found', 404)
+        }
         const dish = await Dish.create({
             name,
             description,
@@ -40,6 +46,7 @@ const createDishService = async (data, files = null) => {
             quantity,
             validity_start,
             validity_end,
+            restaurant_id,
             published: published ?? false,
         }, t)
 
@@ -82,6 +89,10 @@ const findDishById = async (id, transaction = null) => {
                 {
                     model: Menu,
                     through: { attributes: [] }
+                },
+                {
+                    model: Restaurant,
+                    as: "restaurant",
                 },
                 {
                     model: Attachment,
@@ -136,13 +147,16 @@ const getAllDishesService = async (filters = {}, pagination = {}) => {
         published,
         quantity,
         menuIds, // filter by menu(s)
+        restaurantId,
     } = filters;
 
     const { page = 1, limit = 10 } = pagination;
     const offset = (page - 1) * limit;
 
     const where = {};
-
+    if (restaurantId) {
+        where.restaurant_id = restaurantId;
+    }
     if (name) {
         where.name = { [Op.iLike]: `%${name}%` };
     }
@@ -182,7 +196,8 @@ const getAllDishesService = async (filters = {}, pagination = {}) => {
     } else {
         include.push({ model: Menu, through: { attributes: [] } });
     }
-
+    include.push({ model: Restaurant, as: "restaurant" });
+    
     const { rows, count } = await Dish.findAndCountAll({
         where,
         include,
@@ -216,7 +231,7 @@ const updateDishService = async (data, files = null) => {
             validity_start,
             validity_end,
             published,
-            menuIds,
+            menuIds,restaurant_id,
             existingAttachmentIds = [], // Array of IDs to keep
         } = data;
 
@@ -229,7 +244,7 @@ const updateDishService = async (data, files = null) => {
 
 
         await dish.update(
-            { name, description, price, quantity, validity_start, validity_end, published },
+            { name, description, price, quantity, validity_start, validity_end, published,restaurant_id },
             { transaction: t }
         );
 

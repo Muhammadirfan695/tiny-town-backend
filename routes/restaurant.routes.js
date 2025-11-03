@@ -17,7 +17,7 @@ router.get('/restaurant', apiKeyAuth, authorize('Admin', 'Manager', 'Owner'), ge
 router.get('/restaurant/:id', apiKeyAuth, authorize('Admin', 'Manager', 'Owner'), getRestaurantById);
 
 router.patch(
-    '/restaurant/:id', apiKeyAuth,
+    '/restaurant', apiKeyAuth,
     authorize('Admin', 'Manager', 'Owner'),
     upload.fields([
         { name: 'logo', maxCount: 1 },

@@ -31,5 +31,5 @@ router.post(
     validate,
     createRestaurant
 );
-router.delete('/restaurants/:id', apiKeyAuth, authorize('Admin'), deleteRestaurant);
+router.delete('/restaurant/:id', apiKeyAuth, authorize('Admin'), deleteRestaurant);
 module.exports = router;

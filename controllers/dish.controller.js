@@ -17,6 +17,7 @@ const createDish = asyncHandler(async (req, res) => {
         validity_end,
         published,
         menuIds,
+        restaurant_id
     } = req.body;
     const result = await createDishService({
         name,
@@ -27,6 +28,7 @@ const createDish = asyncHandler(async (req, res) => {
         validity_end,
         published,
         menuIds,
+        restaurant_id
     }, req.files);
     handleResponse(res, result);
 
@@ -61,7 +63,7 @@ const getDish = asyncHandler(async (req, res) => {
 });
 
 const getAllDishes = asyncHandler(async (req, res) => {
-    const { page, limit, name, minPrice, maxPrice, validityDate, published, quantity, menuIds } = req.query;
+    const { page, limit, name, minPrice, maxPrice, validityDate, published, quantity, menuIds ,restaurantId} = req.query;
 
 
     let menusArray = undefined;
@@ -77,6 +79,7 @@ const getAllDishes = asyncHandler(async (req, res) => {
         published: published !== undefined ? published === "true" : undefined,
         quantity,
         menuIds: menusArray,
+        restaurantId
     };
 
     const pagination = {
