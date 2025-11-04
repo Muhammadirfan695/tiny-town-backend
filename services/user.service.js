@@ -197,6 +197,65 @@ const findAllAndCountUser = async (
 }
 
 
+// const getAllUsersService = async (query) => {
+//   const transaction = await sequelize.transaction();
+//   try {
+//     let {
+//       page = 1,
+//       limit = 10,
+//       status,
+//       verified,
+//       firstName,
+//       lastName,
+//       email,
+//       deleted
+//     } = query;
+
+//     page = parseInt(page);
+//     limit = parseInt(limit);
+//     const offset = (page - 1) * limit;
+
+//     const where = {};
+
+//     if (status) where.status = status;
+//     if (verified !== undefined)
+//       where.verified = verified === "true" || verified === true;
+//     if (firstName)
+//       where.firstName = { [Op.iLike]: `%${firstName.trim()}%` };
+//     if (lastName)
+//       where.lastName = { [Op.iLike]: `%${lastName.trim()}%` };
+//     if (email)
+//       where.email = { [Op.iLike]: `%${email.trim()}%` };
+
+
+//     let paranoid = true;
+//     if (deleted === "true" || deleted === true) {
+//       paranoid = false;
+//       where.deletedAt = { [Op.ne]: null };
+//     }
+
+//     const result = await findAllAndCountUser(where, limit, offset, paranoid, transaction)
+//     const { rows: users, count } = result
+
+//     await transaction.commit();
+
+//     return success("Users fetched successfully", {
+
+//       data: {
+//         users: users, total: count,
+//         page,
+//         limit,
+//         totalPages: Math.ceil(count / limit),
+//       },
+//     });
+//   } catch (err) {
+//     console.error("getAllUsersService error:", err);
+//     await transaction.rollback();
+//     return error("Failed to fetch users", 400);
+//   }
+// };
+
+
 const getAllUsersService = async (query) => {
   const transaction = await sequelize.transaction();
   try {
@@ -227,25 +286,44 @@ const getAllUsersService = async (query) => {
     if (email)
       where.email = { [Op.iLike]: `%${email.trim()}%` };
 
-
     let paranoid = true;
     if (deleted === "true" || deleted === true) {
       paranoid = false;
       where.deletedAt = { [Op.ne]: null };
     }
 
-    const result = await findAllAndCountUser(where, limit, offset, paranoid, transaction)
-    const { rows: users, count } = result
+    // 🔹 Get all users with roles, then filter out users who only have 'Admin'
+    const usersWithRoles = await User.findAll({
+      where,
+      include: [
+        {
+          model: Role,
+          as: "Roles",
+          attributes: ["name"],
+          through: { attributes: [] },
+        },
+      ],
+      offset,
+      limit,
+      paranoid,
+      transaction,
+    });
+
+    // 🔹 Filter out users that have ONLY the Admin role
+    const filteredUsers = usersWithRoles.filter(user => {
+      const roleNames = user.Roles.map(r => r.name.toLowerCase());
+      return !(roleNames.length === 1 && roleNames[0] === "admin");
+    });
 
     await transaction.commit();
 
     return success("Users fetched successfully", {
-
       data: {
-        users: users, total: count,
+        users: filteredUsers,
+        total: filteredUsers.length,
         page,
         limit,
-        totalPages: Math.ceil(count / limit),
+        totalPages: Math.ceil(filteredUsers.length / limit),
       },
     });
   } catch (err) {
@@ -254,7 +332,6 @@ const getAllUsersService = async (query) => {
     return error("Failed to fetch users", 400);
   }
 };
-
 
 
 const deleteUserService = async (userId, { hardDelete = false } = {}) => {
