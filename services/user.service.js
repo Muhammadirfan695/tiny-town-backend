@@ -240,11 +240,13 @@ const getAllUsersService = async (query) => {
     await transaction.commit();
 
     return success("Users fetched successfully", {
-      total: count,
-      page,
-      limit,
-      totalPages: Math.ceil(count / limit),
-      data: users,
+
+      data: {
+        users: users, total: count,
+        page,
+        limit,
+        totalPages: Math.ceil(count / limit),
+      },
     });
   } catch (err) {
     console.error("getAllUsersService error:", err);

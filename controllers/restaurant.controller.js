@@ -22,7 +22,7 @@ const getRestaurantById = asyncHandler(async (req, res) => {
 });
 
 const updateRestaurant = asyncHandler(async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.body;
   const result = await restaurantService.updateRestaurantService(
     id,
     req.body,
@@ -34,6 +34,7 @@ const updateRestaurant = asyncHandler(async (req, res) => {
 
 const deleteRestaurant = asyncHandler(async (req, res) => {
   const { id } = req.params;
+  console.log("param id----", id)
   const result = await restaurantService.deleteRestaurantService(id);
   handleResponse(res, result);
 });

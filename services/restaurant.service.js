@@ -1,7 +1,7 @@
 const { Op } = require("sequelize");
 const { Restaurant, User, sequelize } = require("../models");
 const { success, error } = require("../helpers/response.helper");
-const { createAttachment } = require("./attachment.service");
+const { createAttachment, deleteAttachment, findAllAttachments } = require("./attachment.service");
 
 const createRestaurantService = async (data, files) => {
   const transaction = await sequelize.transaction();
@@ -86,10 +86,10 @@ const getAllRestaurantsService = async (query) => {
         });
 
         return success("Restaurants fetched successfully", {
-            total: count,
+          data:{  total: count,
             totalPages: Math.ceil(count / limit),
             currentPage: parseInt(page),
-            data: rows
+            restaurants: rows}
         });
 
     } catch (err) {
@@ -211,7 +211,7 @@ const deleteRestaurantService = async (id) => {
     await restaurant.destroy({ transaction });
 
     await transaction.commit();
-    return success("Restaurant deleted successfully");
+    return success("Restaurant deleted successfully",id,200);
   } catch (err) {
     await transaction.rollback();
     console.error("Error in deleteRestaurantService:", err);
