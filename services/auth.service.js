@@ -34,9 +34,9 @@ loginService = async (email, password) => {
     if (!email || !password) {
       return error("Email and Password are Required", 400);
     }
-
+    const sanitizedEmail = email.trim().toLowerCase();
     const user = await User.findOne({
-      where: { email: email },
+      where: { email: sanitizedEmail },
       attributes: { exclude: ["createdAt", "updatedAt"] },
       include: [{
         model: Role, as: "Roles", attributes: { exclude: ["createdAt", "updatedAt"] },
