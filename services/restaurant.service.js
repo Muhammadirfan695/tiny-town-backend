@@ -11,11 +11,21 @@ const createRestaurantService = async (data, files) => {
     if (owner_id) {
       const owner = await User.findByPk(owner_id);
       if (!owner) return error("Owner not found", 404);
+
+      const existingOwnerRestaurant = await Restaurant.findOne({
+        where: { owner_id },
+      });
+      if (existingOwnerRestaurant) {
+        return error("This owner already has a restaurant assigned", 400);
+      }
     }
+
+
     if (manager_id) {
       const manager = await User.findByPk(manager_id);
       if (!manager) return error("Manager not found", 404);
     }
+
 
     const newRestaurant = await Restaurant.create(
       { owner_id, manager_id, ...restaurantData },
@@ -59,43 +69,45 @@ const createRestaurantService = async (data, files) => {
 
 
 const getAllRestaurantsService = async (query) => {
-    try {
-        const { page = 1, limit = 10, search } = query;
-        const offset = (page - 1) * limit;
+  try {
+    const { page = 1, limit = 10, search } = query;
+    const offset = (page - 1) * limit;
 
-        const whereClause = {};
-        if (search) {
-            whereClause[Op.or] = [
-                { name: { [Op.iLike]: `%${search}%` } },
-                { address: { [Op.iLike]: `%${search}%` } },
-                { cuisine_type: { [Op.iLike]: `%${search}%` } },
-            ];
-        }
-
-        const { count, rows } = await Restaurant.findAndCountAll({
-            where: whereClause,
-            include: [
-                { model: User, as: "Owner", attributes: ["id", "firstName", "lastName", "email"] },
-                { model: User, as: "Manager", attributes: ["id", "firstName", "lastName", "email"] },
-                { association: "attachments", attributes: ["attachment_type", "image_path"] }
-            ],
-            limit: parseInt(limit), 
-            offset: parseInt(offset),
-            order: [['createdAt', 'DESC']],
-            distinct: true 
-        });
-
-        return success("Restaurants fetched successfully", {
-          data:{  total: count,
-            totalPages: Math.ceil(count / limit),
-            currentPage: parseInt(page),
-            restaurants: rows}
-        });
-
-    } catch (err) {
-        console.error("Error in getAllRestaurantsService:", err);
-        return error("Failed to fetch restaurants", 500);
+    const whereClause = {};
+    if (search) {
+      whereClause[Op.or] = [
+        { name: { [Op.iLike]: `%${search}%` } },
+        { address: { [Op.iLike]: `%${search}%` } },
+        { cuisine_type: { [Op.iLike]: `%${search}%` } },
+      ];
     }
+
+    const { count, rows } = await Restaurant.findAndCountAll({
+      where: whereClause,
+      include: [
+        { model: User, as: "Owner", attributes: ["id", "firstName", "lastName", "email"] },
+        { model: User, as: "Manager", attributes: ["id", "firstName", "lastName", "email"] },
+        { association: "attachments", attributes: ["attachment_type", "image_path"] }
+      ],
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      order: [['createdAt', 'DESC']],
+      distinct: true
+    });
+
+    return success("Restaurants fetched successfully", {
+      data: {
+        total: count,
+        totalPages: Math.ceil(count / limit),
+        currentPage: parseInt(page),
+        restaurants: rows
+      }
+    });
+
+  } catch (err) {
+    console.error("Error in getAllRestaurantsService:", err);
+    return error("Failed to fetch restaurants", 500);
+  }
 };
 
 const findRestaurantByIdService = async (id) => {
@@ -141,11 +153,35 @@ const updateRestaurantService = async (id, data, files, userRole) => {
         403
       );
     }
+    if (data.owner_id && userRole === "Admin") {
+      const newOwner = await User.findByPk(data.owner_id);
+      if (!newOwner) {
+        await transaction.rollback();
+        return error("Owner not found", 404);
+      }
 
+      // ✅ Prevent assigning an owner who already owns another restaurant
+      const existingOwnerRestaurant = await Restaurant.findOne({
+        where: { owner_id: data.owner_id },
+        transaction,
+      });
+
+      if (existingOwnerRestaurant && existingOwnerRestaurant.id !== id) {
+        await transaction.rollback();
+        return error("This owner already has a restaurant assigned.", 400);
+      }
+    }
+    if (data.manager_id && userRole === "Admin") {
+      const newManager = await User.findByPk(data.manager_id);
+      if (!newManager) {
+        await transaction.rollback();
+        return error("Manager not found", 404);
+      }
+    }
     if (data.service_model && typeof data.service_model === "string") {
       try {
         data.service_model = JSON.parse(data.service_model);
-      } catch (e) {}
+      } catch (e) { }
     }
 
     await restaurant.update(data, { transaction });
@@ -211,7 +247,7 @@ const deleteRestaurantService = async (id) => {
     await restaurant.destroy({ transaction });
 
     await transaction.commit();
-    return success("Restaurant deleted successfully",id,200);
+    return success("Restaurant deleted successfully", id, 200);
   } catch (err) {
     await transaction.rollback();
     console.error("Error in deleteRestaurantService:", err);

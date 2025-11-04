@@ -5,7 +5,7 @@ const {
 } = require("../helpers/auth.helper");
 const { success, error } = require("../helpers/response.helper");
 const { passwordsMatch } = require("../helpers/validation.helper");
-const { sequelize } = require("../models");
+const { sequelize, Role, Attachment, Restaurant } = require("../models");
 const { sendMagicLink, sendOTPtoResetPassword } = require("./email.service");
 const {
   getRoleByName,
@@ -35,7 +35,19 @@ loginService = async (email, password) => {
       return error("Email and Password are Required", 400);
     }
 
-    const user = await findByEmail(email);
+    const user = await User.findOne({
+      where: { email: email },
+      attributes: { exclude: ["createdAt", "updatedAt"] },
+      include: [{
+        model: Role, as: "Roles", attributes: { exclude: ["createdAt", "updatedAt"] },
+        through: { attributes: [] }
+      },
+      { model: Restaurant, as: 'OwnedRestaurants' },
+      { model: Restaurant, as: 'ManagedRestaurants' },
+      { model: Attachment, as: "attachments", attributes: { exclude: ["createdAt", "updatedAt"] } }],
+
+
+    });
     if (!user) {
       return error("Invalid Credentials", 401);
     }
@@ -145,6 +157,10 @@ const loginWithMagicLink = async (token) => {
         magicLoginToken: token,
         magicLoginTokenExpires: { [Op.gt]: new Date() },
       },
+      include: [
+        { model: Restaurant, as: 'OwnedRestaurants' },
+        { model: Restaurant, as: 'ManagedRestaurants' },
+      ],
     });
 
     if (!user) {
@@ -218,7 +234,7 @@ const resetPasswordService = async (otp, password, confirmPassword) => {
 
 const changePasswordService = async (
   id,
-  currentPassword, 
+  currentPassword,
   password,
   confirmPassword
 ) => {
@@ -239,7 +255,7 @@ const changePasswordService = async (
         return error("Your current password is incorrect.", 403);
       }
     }
-  
+
     const doPasswordsMatch = passwordsMatch(password, confirmPassword);
     if (!doPasswordsMatch) {
       return error("New password and confirmation do not match.", 400);
