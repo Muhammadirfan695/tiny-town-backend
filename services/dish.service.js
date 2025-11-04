@@ -146,7 +146,7 @@ const getAllDishesService = async (filters = {}, pagination = {}) => {
         validityDate,
         published,
         quantity,
-        menuIds, // filter by menu(s)
+        menuIds,
         restaurantId,
     } = filters;
 
@@ -154,69 +154,55 @@ const getAllDishesService = async (filters = {}, pagination = {}) => {
     const offset = (page - 1) * limit;
 
     const where = {};
-    if (restaurantId) {
-        where.restaurant_id = restaurantId;
-    }
-    if (name) {
-        where.name = { [Op.iLike]: `%${name}%` };
-    }
-
-    if (minPrice !== undefined) {
-        where.price = { ...(where.price || {}), [Op.gte]: minPrice };
-    }
-
-    if (maxPrice !== undefined) {
-        where.price = { ...(where.price || {}), [Op.lte]: maxPrice };
-    }
-
+    if (restaurantId) where.restaurant_id = restaurantId;
+    if (name) where.name = { [Op.iLike]: `%${name}%` };
+    if (minPrice !== undefined) where.price = { ...(where.price || {}), [Op.gte]: minPrice };
+    if (maxPrice !== undefined) where.price = { ...(where.price || {}), [Op.lte]: maxPrice };
     if (validityDate) {
         const date = new Date(validityDate);
         where.validity_start = { [Op.lte]: date };
         where.validity_end = { [Op.gte]: date };
     }
-
-    if (published !== undefined) {
-        where.published = published;
-    }
-
-    if (quantity) {
-        where.quantity = quantity;
-    }
+    if (published !== undefined) where.published = published;
+    if (quantity) where.quantity = quantity;
 
     const include = [
         { model: Attachment, as: "attachments" },
+        { model: Restaurant, as: "restaurant" },
+        {
+            model: Menu,
+            through: { attributes: [] }, // join table
+            ...(menuIds?.length > 0 && { where: { id: { [Op.in]: menuIds } } }),
+        }
     ];
 
-    if (menuIds && menuIds.length > 0) {
-        include.push({
-            model: Menu,
-            through: { attributes: [] },
-            where: { id: { [Op.in]: menuIds } },
-        });
-    } else {
-        include.push({ model: Menu, through: { attributes: [] } });
-    }
-    include.push({ model: Restaurant, as: "restaurant" });
     
-    const { rows, count } = await Dish.findAndCountAll({
+
+    // 🧮 Separate count (avoid heavy joins)
+    const total = await Dish.count({ where });
+
+    // 📄 Fetch paginated data
+    const rows = await Dish.findAll({
         where,
         include,
         limit,
         offset,
-        distinct: true,
         order: [["createdAt", "DESC"]],
     });
 
-    return success("Dishes Fetch Successfully", {
-        data: {
-            dishes: rows,
-            total: count,
-            page,
-            limit,
-            totalPages: Math.ceil(count / limit),
-        }
-        ,
-    }, 200);
+    return success(
+        "Dishes Fetched Successfully",
+        {
+            data: {
+                dishes: rows,
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
+            },
+        },
+        200
+    );
 };
 
 const updateDishService = async (data, files = null) => {
@@ -231,7 +217,7 @@ const updateDishService = async (data, files = null) => {
             validity_start,
             validity_end,
             published,
-            menuIds,restaurant_id,
+            menuIds, restaurant_id,
             existingAttachmentIds = [], // Array of IDs to keep
         } = data;
 
@@ -244,7 +230,7 @@ const updateDishService = async (data, files = null) => {
 
 
         await dish.update(
-            { name, description, price, quantity, validity_start, validity_end, published,restaurant_id },
+            { name, description, price, quantity, validity_start, validity_end, published, restaurant_id },
             { transaction: t }
         );
 

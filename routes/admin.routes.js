@@ -4,6 +4,7 @@ const { createUser, getUserById, UpdateUser, getAllUsers, deleteUser, restoreUse
 const { upload } = require("../utils/uploadImage");
 const restaurantRoutes = require('./restaurant.routes');
 const menuRoutes = require('./menu.routes')
+const dishRoutes = require('./dish.routes')
 const { createRestaurantValidationRules, validate } = require("../validations/restaurant.validator");
 const { createRestaurant, deleteRestaurant } = require("../controllers/restaurant.controller");
 
@@ -18,7 +19,7 @@ router.post('/user/:id', apiKeyAuth, authorize("Admin"), restoreUser);
 
 router.use('/', restaurantRoutes);
 router.use('/', menuRoutes)
-
+router.use('/', dishRoutes)
 router.post(
     '/restaurant',
     authorize('Admin'),
