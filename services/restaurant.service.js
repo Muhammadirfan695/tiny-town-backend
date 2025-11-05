@@ -1,7 +1,7 @@
 const { Op } = require("sequelize");
 const { Restaurant, User, sequelize } = require("../models");
 const { success, error } = require("../helpers/response.helper");
-const { createAttachment, deleteAttachment, findAllAttachments } = require("./attachment.service");
+const { createAttachment, deleteAttachment, findAllAttachments, findOneAttachment } = require("./attachment.service");
 
 const createRestaurantService = async (data, files) => {
   const transaction = await sequelize.transaction();
@@ -68,12 +68,57 @@ const createRestaurantService = async (data, files) => {
 };
 
 
+// const getAllRestaurantsService = async (query) => {
+//   try {
+//     const { page = 1, limit = 10, search,owner_id,manager_id } = query;
+//     const offset = (page - 1) * limit;
+
+//     const whereClause = {};
+//     if (search) {
+//       whereClause[Op.or] = [
+//         { name: { [Op.iLike]: `%${search}%` } },
+//         { address: { [Op.iLike]: `%${search}%` } },
+//         { cuisine_type: { [Op.iLike]: `%${search}%` } },
+//       ];
+//     }
+
+//     const { count, rows } = await Restaurant.findAndCountAll({
+//       where: whereClause,
+//       include: [
+//         { model: User, as: "Owner", attributes: ["id", "firstName", "lastName", "email"] },
+//         { model: User, as: "Manager", attributes: ["id", "firstName", "lastName", "email"] },
+//         { association: "attachments", attributes: ["attachment_type", "image_path"] }
+//       ],
+//       limit: parseInt(limit),
+//       offset: parseInt(offset),
+//       order: [['createdAt', 'DESC']],
+//       distinct: true
+//     });
+
+//     return success("Restaurants fetched successfully", {
+//       data: {
+//         total: count,
+//         totalPages: Math.ceil(count / limit),
+//         currentPage: parseInt(page),
+//         restaurants: rows
+//       }
+//     });
+
+//   } catch (err) {
+//     console.error("Error in getAllRestaurantsService:", err);
+//     return error("Failed to fetch restaurants", 500);
+//   }
+// };
+
+
 const getAllRestaurantsService = async (query) => {
   try {
-    const { page = 1, limit = 10, search } = query;
+    const { page = 1, limit = 10, search, owner_id, manager_id } = query;
     const offset = (page - 1) * limit;
 
     const whereClause = {};
+
+    // 🔹 Search filter
     if (search) {
       whereClause[Op.or] = [
         { name: { [Op.iLike]: `%${search}%` } },
@@ -82,17 +127,38 @@ const getAllRestaurantsService = async (query) => {
       ];
     }
 
+    // 🔹 Owner filter
+    if (owner_id) {
+      whereClause.owner_id = owner_id;
+    }
+
+    // 🔹 Manager filter
+    if (manager_id) {
+      whereClause.manager_id = manager_id;
+    }
+
     const { count, rows } = await Restaurant.findAndCountAll({
       where: whereClause,
       include: [
-        { model: User, as: "Owner", attributes: ["id", "firstName", "lastName", "email"] },
-        { model: User, as: "Manager", attributes: ["id", "firstName", "lastName", "email"] },
-        { association: "attachments", attributes: ["attachment_type", "image_path"] }
+        {
+          model: User,
+          as: "Owner",
+          attributes: ["id", "firstName", "lastName", "email"],
+        },
+        {
+          model: User,
+          as: "Manager",
+          attributes: ["id", "firstName", "lastName", "email"],
+        },
+        {
+          association: "attachments",
+          attributes: ["attachment_type", "image_path"],
+        },
       ],
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['createdAt', 'DESC']],
-      distinct: true
+      order: [["createdAt", "DESC"]],
+      distinct: true,
     });
 
     return success("Restaurants fetched successfully", {
@@ -100,10 +166,9 @@ const getAllRestaurantsService = async (query) => {
         total: count,
         totalPages: Math.ceil(count / limit),
         currentPage: parseInt(page),
-        restaurants: rows
-      }
+        restaurants: rows,
+      },
     });
-
   } catch (err) {
     console.error("Error in getAllRestaurantsService:", err);
     return error("Failed to fetch restaurants", 500);

@@ -1512,12 +1512,22 @@
  *         name: menuIds
  *         schema:
  *           type: string
- *         description: Comma-separated menu IDs to filter dishes by menu
+ *         description: Comma-separated menu IDs to include (fetch dishes that belong to these menus)
+ *       - in: query
+ *         name: notInMenuIds
+ *         schema:
+ *           type: string
+ *         description: Comma-separated menu IDs to exclude (fetch dishes that are not part of these menus)
  *       - in: query
  *         name: restaurantId
  *         schema:
  *           type: string
- *         description: Filter by restaurantId
+ *         description: Filter by restaurant ID (returns dishes belonging to the given restaurant)
+ *       - in: query
+ *         name: excludeRestaurantId
+ *         schema:
+ *           type: string
+ *         description: Exclude dishes belonging to the given restaurant ID
  *     responses:
  *       200:
  *         description: Dishes fetched successfully
@@ -1728,24 +1738,26 @@
  *           schema:
  *             type: object
  *             required:
- *               - dishId
- *               - menuIds
+ *               - menuId
+ *               - dishIds
  *             properties:
- *               dishId:
+ *               menuId:
  *                 type: string
  *                 format: uuid
- *                 description: ID of the dish to update
- *                 example: "b45f78e0-7f94-4d17-bc3a-91b56ef9923c"
- *               menuIds:
+ *                 description: The ID of the menu to assign dishes to
+ *                 example: "c1234567-89ab-4cde-9012-3456789abcd"
+ *               dishIds:
  *                 type: array
  *                 items:
  *                   type: string
  *                   format: uuid
- *                 description: Array of menu IDs to assign to the dish
- *                 example: ["c1234567-89ab-4cde-9012-3456789abcd"]
+ *                 description: Array of dish IDs to be assigned to the menu
+ *                 example:
+ *                   - "b45f78e0-7f94-4d17-bc3a-91b56ef9923c"
+ *                   - "d22f88a0-5a34-4b16-ae8a-55a22fa45cbe"
  *     responses:
  *       200:
- *         description: Menus assigned successfully
+ *         description: Dishes assigned successfully
  *         content:
  *           application/json:
  *             schema:
@@ -1756,20 +1768,22 @@
  *                   example: true
  *                 message:
  *                   type: string
- *                   example: "Menus assigned to dish successfully"
+ *                   example: "Dishes assigned to menu successfully"
  *                 data:
  *                   type: object
  *                   properties:
- *                     dishId:
+ *                     menuId:
  *                       type: string
- *                       example: "b45f78e0-7f94-4d17-bc3a-91b56ef9923c"
- *                     menuIds:
+ *                       example: "c1234567-89ab-4cde-9012-3456789abcd"
+ *                     dishIds:
  *                       type: array
  *                       items:
  *                         type: string
- *                         example: ["c1234567-89ab-4cde-9012-3456789abcd"]
+ *                       example:
+ *                         - "b45f78e0-7f94-4d17-bc3a-91b56ef9923c"
+ *                         - "d22f88a0-5a34-4b16-ae8a-55a22fa45cbe"
  *       404:
- *         description: Dish not found or some menu IDs do not exist
+ *         description: Menu or some dish IDs do not exist
  *         content:
  *           application/json:
  *             schema:
@@ -1780,7 +1794,20 @@
  *                   example: false
  *                 message:
  *                   type: string
- *                   example: "Dish not found" 
+ *                   example: "The following dish IDs do not exist: <ids>"
+ *       400:
+ *         description: Invalid input data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 succeeded:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "menuId must be a valid string"
  *       500:
  *         description: Internal server error
  *         content:
@@ -1793,10 +1820,8 @@
  *                   example: false
  *                 message:
  *                   type: string
- *                   example: "Failed to assign menus to dish"
+ *                   example: "Failed to assign dishes to menu"
  */
-
-
 
 
 /**
@@ -1863,3 +1888,109 @@
  *                   type: string
  *                   example: "Some error message"
  */
+
+
+
+/**
+ * @swagger
+ * /api/admin/remove-menus:
+ *   post:
+ *     summary: Assign menus to a dish
+ *     description: Assign one or more menus to a dish. This will replace any existing menus linked to the dish.
+ *     tags:
+ *       - Admin
+ *     security:
+ *       - bearerAuth: []
+ *       - AdminApiKeyAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - menuId
+ *               - dishIds
+ *             properties:
+ *               menuId:
+ *                 type: string
+ *                 format: uuid
+ *                 description: The ID of the menu to assign dishes to
+ *                 example: "c1234567-89ab-4cde-9012-3456789abcd"
+ *               dishIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: uuid
+ *                 description: Array of dish IDs to be assigned to the menu
+ *                 example:
+ *                   - "b45f78e0-7f94-4d17-bc3a-91b56ef9923c"
+ *                   - "d22f88a0-5a34-4b16-ae8a-55a22fa45cbe"
+ *     responses:
+ *       200:
+ *         description: Dishes assigned successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 succeeded:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Dishes assigned to menu successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     menuId:
+ *                       type: string
+ *                       example: "c1234567-89ab-4cde-9012-3456789abcd"
+ *                     dishIds:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       example:
+ *                         - "b45f78e0-7f94-4d17-bc3a-91b56ef9923c"
+ *                         - "d22f88a0-5a34-4b16-ae8a-55a22fa45cbe"
+ *       404:
+ *         description: Menu or some dish IDs do not exist
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 succeeded:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "The following dish IDs do not exist: <ids>"
+ *       400:
+ *         description: Invalid input data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 succeeded:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "menuId must be a valid string"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 succeeded:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Failed to assign dishes to menu"
+ */
+
