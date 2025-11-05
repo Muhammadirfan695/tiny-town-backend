@@ -19,33 +19,38 @@ const createDishValidator = [
         .optional()
         .isString()
         .withMessage("Quantity must be a string (e.g., '2 person' or '800g')."),
-    body("validity_start")
-        .optional()
-        .isISO8601()
-        .withMessage("Validity start must be a valid date."),
-    body("validity_end")
-        .optional()
-        .isISO8601()
-        .withMessage("Validity end must be a valid date."),
-    body()
-        .custom((value, { req }) => {
-            const { validity_start, validity_end } = req.body;
-
-            if (validity_start && validity_end) {
-                const start = new Date(validity_start);
-                const end = new Date(validity_end);
-
-                if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-                    throw new Error("Invalid date format for validity_start or validity_end.");
-                }
-
-                if (start > end) {
-                    throw new Error("Validity start date must be before or equal to end date.");
-                }
+        body("validity_start")
+        .optional({ checkFalsy: true })
+        .custom((value) => {
+            const date = new Date(value);
+            if (isNaN(date.getTime())) {
+                throw new Error("Start date must be a valid date.");
             }
-
             return true;
         }),
+
+    body("validity_end")
+        .optional({ checkFalsy: true })
+        .custom((value) => {
+            const date = new Date(value);
+            if (isNaN(date.getTime())) {
+                throw new Error("End date must be a valid date.");
+            }
+            return true;
+        }),
+
+    // ✅ Ensure start <= end if both exist
+    body().custom((_, { req }) => {
+        const { validity_start, validity_end } = req.body;
+        if (validity_start && validity_end) {
+            const start = new Date(validity_start);
+            const end = new Date(validity_end);
+            if (start > end) {
+                throw new Error("Start date cannot be after end date.");
+            }
+        }
+        return true;
+    }),
     body("published")
         .optional()
         .isBoolean()
@@ -100,26 +105,38 @@ const updateDishValidator = [
         .optional()
         .isString()
         .withMessage("Quantity must be a string"),
-    body("validity_start")
-        .optional()
-        .isISO8601()
-        .withMessage("Validity start must be a valid date"),
-    body("validity_end")
-        .optional()
-        .isISO8601()
-        .withMessage("Validity end must be a valid date"),
-    body()
-        .custom((value, { req }) => {
-            const { validity_start, validity_end } = req.body;
-            if (validity_start && validity_end) {
-                const start = new Date(validity_start);
-                const end = new Date(validity_end);
-                if (start > end) {
-                    throw new Error("Validity start date must be before or equal to end date");
-                }
+        body("validity_start")
+        .optional({ checkFalsy: true })
+        .custom((value) => {
+            const date = new Date(value);
+            if (isNaN(date.getTime())) {
+                throw new Error("Start date must be a valid date.");
             }
             return true;
         }),
+
+    body("validity_end")
+        .optional({ checkFalsy: true })
+        .custom((value) => {
+            const date = new Date(value);
+            if (isNaN(date.getTime())) {
+                throw new Error("End date must be a valid date.");
+            }
+            return true;
+        }),
+
+    // ✅ Ensure start <= end if both exist
+    body().custom((_, { req }) => {
+        const { validity_start, validity_end } = req.body;
+        if (validity_start && validity_end) {
+            const start = new Date(validity_start);
+            const end = new Date(validity_end);
+            if (start > end) {
+                throw new Error("Start date cannot be after end date.");
+            }
+        }
+        return true;
+    }),
     body("published")
         .optional()
         .isBoolean()
@@ -128,22 +145,21 @@ const updateDishValidator = [
         .optional()
         .isArray()
         .withMessage("menuIds must be an array of UUIDs"),
-    body("existingAttachmentIds")
-        .optional()
-        .isArray()
-        .withMessage("existingAttachmentIds must be an array of UUIDs"),
+
 ];
 
 
 const setMenuToDishValidator = [
-    body("dishId")
-        .notEmpty().withMessage("Dish ID is required")
-        .isUUID().withMessage("Dish ID must be a valid UUID"),
-    body("menuIds")
-        .isArray({ min: 1 }).withMessage("menuIds must be a non-empty array"),
-    body("menuIds.*")
-        .isUUID().withMessage("Each menu ID must be a valid UUID"),
-];
+    body("menuId")
+      .notEmpty().withMessage("Menu ID is required")
+      .isUUID().withMessage("Menu ID must be a valid UUID"),
+  
+    body("dishIds")
+      .isArray({ min: 1 }).withMessage("dishIds must be a non-empty array"),
+  
+    body("dishIds.*")
+      .isUUID().withMessage("Each dish ID must be a valid UUID"),
+  ];
 
 module.exports = {
     createDishValidator,

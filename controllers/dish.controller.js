@@ -2,8 +2,9 @@ const asyncHandler = require('express-async-handler');
 
 const { createDishService, findDishById, getAllDishesService, updateDishService, deleteDishService, setDishMenusService } = require('../services/dish.service');
 
-const { sequelize } = require('../models');
+const { sequelize, Dish } = require('../models');
 const { handleResponse, error, success } = require('../helpers/response.helper');
+const { validateMenusExistService } = require('../services/menu.service');
 
 
 const createDish = asyncHandler(async (req, res) => {
@@ -63,7 +64,7 @@ const getDish = asyncHandler(async (req, res) => {
 });
 
 const getAllDishes = asyncHandler(async (req, res) => {
-    const { page, limit, name, minPrice, maxPrice, validityDate, published, quantity, menuIds ,restaurantId} = req.query;
+    const { page, limit, name, minPrice, maxPrice, validityDate, published, quantity, menuIds, restaurantId, notInMenuIds, excludeRestaurantId } = req.query;
 
 
     let menusArray = undefined;
@@ -79,7 +80,9 @@ const getAllDishes = asyncHandler(async (req, res) => {
         published: published !== undefined ? published === "true" : undefined,
         quantity,
         menuIds: menusArray,
-        restaurantId
+        restaurantId,
+        notInMenuIds,
+        excludeRestaurantId
     };
 
     const pagination = {
@@ -129,7 +132,7 @@ const deleteDish = asyncHandler(async (req, res) => {
 });
 
 
-const setMenuToDish = asyncHandler(async (req, res) => {
+const setMenuToDishs = asyncHandler(async (req, res) => {
     const t = await sequelize.transaction();
     try {
         const { dishId, menuIds } = req.body;
@@ -160,10 +163,128 @@ const setMenuToDish = asyncHandler(async (req, res) => {
     }
 });
 
+
+const setMenuToDish = asyncHandler(async (req, res) => {
+    const t = await sequelize.transaction();
+    try {
+        const { dishIds, menuId } = req.body;
+
+        console.log(dishIds, "ddddd", menuId);
+
+        if (!Array.isArray(dishIds) || !dishIds.length) {
+            await t.rollback();
+            return handleResponse(res, error("dishIds must be a non-empty array", 400));
+        }
+
+        if (!menuId || typeof menuId !== "string") {
+            await t.rollback();
+            return handleResponse(res, error("menuId must be a valid string", 400));
+        }
+
+        const dishes = await Dish.findAll({
+            where: { id: dishIds },
+            transaction: t,
+        });
+
+        const foundDishIds = dishes.map((d) => d.id);
+        const missingDishIds = dishIds.filter((id) => !foundDishIds.includes(id));
+
+        if (missingDishIds.length > 0) {
+            await t.rollback();
+            return handleResponse(
+                res,
+                error(`The following dish IDs do not exist: ${missingDishIds.join(", ")}`, 404)
+            );
+        }
+
+        const { valid, missingIds } = await validateMenusExistService([menuId], t);
+        if (!valid) {
+            await t.rollback();
+            return handleResponse(res, error(`Menu not found: ${missingIds.join(", ")}`, 404));
+        }
+
+        for (const dish of dishes) {
+            await setDishMenusService(dish, [menuId], t);
+        }
+
+        await t.commit();
+        return handleResponse(
+            res,
+            success("Dishes assigned to menu successfully", { dishIds, menuId }, 200)
+        );
+    } catch (err) {
+        if (!t.finished) await t.rollback();
+        console.error("Error assigning dishes to menu:", err);
+        return handleResponse(res, error("Failed to assign dishes to menu", 500));
+    }
+});
+
+const removeDishFromMenu = asyncHandler(async (req, res) => {
+    const t = await sequelize.transaction();
+    try {
+      const { dishIds, menuId } = req.body;
+  
+      console.log(dishIds, "removing from menu:", menuId);
+  
+      // 🔹 Validate dishIds
+      if (!Array.isArray(dishIds) || !dishIds.length) {
+        await t.rollback();
+        return handleResponse(res, error("dishIds must be a non-empty array", 400));
+      }
+  
+      // 🔹 Validate menuId
+      if (!menuId || typeof menuId !== "string") {
+        await t.rollback();
+        return handleResponse(res, error("menuId must be a valid string", 400));
+      }
+  
+      // 🔹 Check if dishes exist
+      const dishes = await Dish.findAll({
+        where: { id: dishIds },
+        transaction: t,
+      });
+  
+      const foundDishIds = dishes.map((d) => d.id);
+      const missingDishIds = dishIds.filter((id) => !foundDishIds.includes(id));
+  
+      if (missingDishIds.length > 0) {
+        await t.rollback();
+        return handleResponse(
+          res,
+          error(`The following dish IDs do not exist: ${missingDishIds.join(", ")}`, 404)
+        );
+      }
+  
+      // 🔹 Check if menu exists
+      const { valid, missingIds } = await validateMenusExistService([menuId], t);
+      if (!valid) {
+        await t.rollback();
+        return handleResponse(res, error(`Menu not found: ${missingIds.join(", ")}`, 404));
+      }
+  
+      // 🔹 Remove association (Dish ↔ Menu)
+      for (const dish of dishes) {
+        await dish.removeMenu(menuId, { transaction: t }); // <-- Removes link from join table
+      }
+  
+      await t.commit();
+      return handleResponse(
+        res,
+        success("Dishes removed from menu successfully", { dishIds, menuId }, 200)
+      );
+    } catch (err) {
+      if (!t.finished) await t.rollback();
+      console.error("Error removing dishes from menu:", err);
+      return handleResponse(res, error("Failed to remove dishes from menu", 500));
+    }
+  });
+  
+
 module.exports = {
     createDish,
     getDish,
     getAllDishes,
     updateDish, deleteDish,
-    setMenuToDish
+    setMenuToDish,
+    removeDishFromMenu
 }

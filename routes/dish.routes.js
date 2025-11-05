@@ -1,6 +1,6 @@
 const express = require('express');
 const { createDishValidator, getDishValidator, updateDishValidator, setMenuToDishValidator } = require('../validations/dish.validations');
-const { createDish, getDish, getAllDishes, updateDish, deleteDish, setMenuToDish } = require('../controllers/dish.controller');
+const { createDish, getDish, getAllDishes, updateDish, deleteDish, setMenuToDish, removeDishFromMenu } = require('../controllers/dish.controller');
 const { apiKeyAuth, validateRequest } = require('../middleware/authMiddleware');
 const { upload } = require('../utils/uploadImage');
 const router = express.Router();
@@ -24,6 +24,10 @@ router.post("/set-menus",
     setMenuToDishValidator,
     validateRequest,
     setMenuToDish);
-
+router.post("/remove-menus",
+    apiKeyAuth,
+    setMenuToDishValidator,
+    validateRequest,
+    removeDishFromMenu);
 router.delete("/dish/:id", apiKeyAuth, getDishValidator, validateRequest, deleteDish);
 module.exports = router;

@@ -28,6 +28,7 @@ const findMenuById = async (id, transaction = null) => {
         as: "restaurant",
         attributes: ["id", "name", "address"],
       },
+      { association: "attachments" },
     ],
     transaction,
   });
