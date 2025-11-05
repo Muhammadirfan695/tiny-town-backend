@@ -246,7 +246,7 @@ const deleteMenuService = async (id) => {
     await menu.destroy({ transaction });
 
     await transaction.commit();
-    return success("Menu deleted successfully", null, 200);
+    return success("Menu deleted successfully", id, 200);
   } catch (err) {
     await transaction.rollback();
     console.error("Error deleting menu:", err);
