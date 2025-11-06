@@ -10,7 +10,6 @@ const createAuthToken = (userId, role) => {
 };
 
 const generateMagicLink = (token) => {
-console.log("tteeett",token)
   const client_url = process.env.CLIENT_URL
   return `${client_url}?token=${token}`;
 }

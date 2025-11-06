@@ -60,6 +60,13 @@ app.use(
     },
   })
 );
+app.use('/qrcodes', express.static(path.join(__dirname, 'qrcodes'), {
+  setHeaders: (res) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+  },
+})
+);
 
 app.use('/localbites', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // ========================

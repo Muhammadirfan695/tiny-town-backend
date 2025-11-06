@@ -27,11 +27,11 @@ const Restaurant = sequelize.define(
             allowNull: true,
         },
         opening_hours: {
-            type: DataTypes.STRING, 
+            type: DataTypes.STRING,
             allowNull: true,
         },
         closing_hours: {
-            type: DataTypes.STRING, 
+            type: DataTypes.STRING,
             allowNull: true,
         },
         contact_email: {
@@ -46,18 +46,18 @@ const Restaurant = sequelize.define(
             allowNull: true,
         },
         service_model: {
-            type: DataTypes.JSON, 
+            type: DataTypes.JSON,
             allowNull: true,
         },
         owner_id: {
             type: DataTypes.UUID,
-            allowNull: true, 
+            allowNull: true,
             references: {
                 model: 'User',
                 key: 'id'
             }
         },
-     manager_id: {
+        manager_id: {
             type: DataTypes.UUID,
             allowNull: true,
             references: {
@@ -65,7 +65,16 @@ const Restaurant = sequelize.define(
                 key: 'id'
             }
         },
-    }, 
+        qr_normal: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        qr_light: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+
+    },
     {
         timestamps: true,
         freezeTableName: true,

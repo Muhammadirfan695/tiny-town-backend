@@ -49,6 +49,8 @@ test.js
 *.mov
 *.wmv
 
+
+!/qrcodes/.gitkeep
+/qrcodes/*
 /public/images/*
-/public/attachments/*
-/public/product_images/*
+!/public/images/.gitkeep
