@@ -2,6 +2,7 @@ const { Op } = require("sequelize");
 const { Restaurant, User, sequelize } = require("../models");
 const { success, error } = require("../helpers/response.helper");
 const { createAttachment, deleteAttachment, findAllAttachments, findOneAttachment } = require("./attachment.service");
+const { generateRestaurantQRCodes } = require("./qrCode.service");
 
 const createRestaurantService = async (data, files) => {
   const transaction = await sequelize.transaction();
@@ -54,6 +55,15 @@ const createRestaurantService = async (data, files) => {
         transaction
       );
     }
+    const token = "secure-token";
+    const qrFiles = await generateRestaurantQRCodes(newRestaurant.id, token);
+
+
+
+    await newRestaurant.update(
+      { qr_normal: qrFiles.normal, qr_light: qrFiles.light },
+      { transaction }
+    );
 
     await transaction.commit();
     const finalRestaurant = await Restaurant.findByPk(newRestaurant.id, {
