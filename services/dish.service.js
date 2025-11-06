@@ -5,330 +5,324 @@ const { createAttachment, deleteAttachment, findAllAttachments } = require("./at
 const { validateMenusExistService } = require("./menu.service");
 const { findRestaurantByIdService } = require("./restaurant.service");
 
-
-
 const setDishMenusService = async (dish, menuIds, transaction) => {
-    if (Array.isArray(menuIds) && menuIds.length > 0) {
-        await dish.setMenus(menuIds, { transaction });
-    }
+  if (Array.isArray(menuIds) && menuIds.length > 0) {
+    await dish.setMenus(menuIds, { transaction });
+  }
 };
 
 const createDishService = async (data, files = null) => {
-    const t = await sequelize.transaction();
-    try {
-        const {
-            name,
-            description,
-            price,
-            quantity,
-            validity_start,
-            validity_end,
-            published,
-            menuIds,
-            restaurant_id
-        } = data;
-        if (menuIds && menuIds.length > 0) {
-            const { valid, missingIds } = await validateMenusExistService(menuIds, t);
-            if (!valid) {
-                await t.rollback();
-                return error(`The following menu IDs do not exist: ${missingIds.join(", ")}`, 400)
-            }
-        }
-        const restaurant = await findRestaurantByIdService(restaurant_id)
-        if (!restaurant) {
-            await t.rollback();
-            return error('No Restaurant Found', 404)
-        }
-        const dish = await Dish.create({
-            name,
-            description,
-            price,
-            quantity,
-            validity_start,
-            validity_end,
-            restaurant_id,
-            published: published ?? false,
-        }, t)
-
-        if (menuIds && menuIds.length > 0) {
-            await setDishMenusService(dish, menuIds, t);
-        }
-
-        if (files && files.length > 0) {
-
-            for (const file of files) {
-                await createAttachment(
-                    dish.id,
-                    "Dish",
-                    "photo",
-                    file.path,
-                    file.filename,
-                    t
-                );
-            }
-        }
-        await t.commit();
-        const createdDish = await findDishById(dish.id);
-
-        return success("Dish created successfully.", createdDish, 200)
-
-    } catch (err) {
-        if (!t.finished) {
-            await t.rollback();
-        }
-        console.error("Error creating dish:", err);
-        return error("Failed to create dish", 500)
-
+  const t = await sequelize.transaction();
+  try {
+    const {
+      name,
+      description,
+      price,
+      quantity,
+      validity_start,
+      validity_end,
+      published,
+      menuIds,
+      restaurant_id
+    } = data;
+    if (menuIds && menuIds.length > 0) {
+      const { valid, missingIds } = await validateMenusExistService(menuIds, t);
+      if (!valid) {
+        await t.rollback();
+        return error(`The following menu IDs do not exist: ${missingIds.join(", ")}`, 400)
+      }
     }
+    const restaurant = await findRestaurantByIdService(restaurant_id)
+    if (!restaurant) {
+      await t.rollback();
+      return error('No Restaurant Found', 404)
+    }
+    const dish = await Dish.create({
+      name,
+      description,
+      price,
+      quantity,
+      validity_start,
+      validity_end,
+      restaurant_id,
+      published: published ?? false,
+    }, t)
+
+    if (menuIds && menuIds.length > 0) {
+      await setDishMenusService(dish, menuIds, t);
+    }
+
+    if (files && files.length > 0) {
+
+      for (const file of files) {
+        await createAttachment(
+          dish.id,
+          "Dish",
+          "photo",
+          file.path,
+          file.filename,
+          t
+        );
+      }
+    }
+    await t.commit();
+    const createdDish = await findDishById(dish.id);
+
+    return success("Dish created successfully.", createdDish, 200)
+
+  } catch (err) {
+    if (!t.finished) {
+      await t.rollback();
+    }
+    console.error("Error creating dish:", err);
+    return error("Failed to create dish", 500)
+
+  }
 };
 
 const findDishById = async (id, transaction = null) => {
-    return await Dish.findByPk(id,
+  return await Dish.findByPk(id,
+    {
+      include: [
         {
-            include: [
-                {
-                    model: Menu,
-                    through: { attributes: [] }
-                },
-                {
-                    model: Restaurant,
-                    as: "restaurant",
-                },
-                {
-                    model: Attachment,
-                    as: "attachments"
-                },
-            ], transaction
-        });
+          model: Menu,
+          through: { attributes: [] }
+        },
+        {
+          model: Restaurant,
+          as: "restaurant",
+        },
+        {
+          model: Attachment,
+          as: "attachments"
+        },
+      ], transaction
+    });
 };
 
 
 const deleteDishService = async (id) => {
-    const t = await sequelize.transaction();
-    try {
+  const t = await sequelize.transaction();
+  try {
 
-        const dish = await findDishById(id);
-        if (!dish) {
-            if (!t.finished) await t.rollback();
-            return error("No Dish Found", 404)
-        }
-
-        const attachments = await findAllAttachments(dish.id, "Dish", t);
-        for (const attachment of attachments) {
-            await deleteAttachment(attachment, t);
-        }
-
-        await dish.destroy({ transaction: t });
-
-        await t.commit();
-        return success("Dish deleted successfully", id, 200)
-
-    } catch (err) {
-        if (!t.finished) await t.rollback();
-        console.error("Error deleting dish:", err);
-        return error("Failed to delete dish", 500)
-
+    const dish = await findDishById(id);
+    if (!dish) {
+      if (!t.finished) await t.rollback();
+      return error("No Dish Found", 404)
     }
+
+    const attachments = await findAllAttachments(dish.id, "Dish", t);
+    for (const attachment of attachments) {
+      await deleteAttachment(attachment, t);
+    }
+   
+    await dish.destroy({ transaction: t });
+
+    await t.commit();
+    return success("Dish deleted successfully", id, 200)
+
+  } catch (err) {
+    if (!t.finished) await t.rollback();
+    console.error("Error deleting dish:", err);
+    return error("Failed to delete dish", 500)
+
+  }
 }
 
 
 const getAllDishesService = async (filters = {}, pagination = {}) => {
-    let {
-      name,
-      minPrice,
-      maxPrice,
-      validityDate,
-      published,
-      quantity,
-      menuIds,
-      restaurantId,
-      excludeRestaurantId,
-      notInMenuIds,
-    } = filters;
-  
-    const { page = 1, limit = 10 } = pagination;
-    const offset = (page - 1) * limit;
-  
-    const where = {};
-  
-    // 🔹 Normalize string inputs to arrays
-    if (typeof menuIds === "string")
-      menuIds = menuIds.split(",").map((id) => id.trim());
-    if (typeof notInMenuIds === "string")
-      notInMenuIds = notInMenuIds.split(",").map((id) => id.trim());
-  
-    // 🔹 Base filters
-    if (restaurantId) where.restaurant_id = restaurantId;
-    if (excludeRestaurantId)
-      where.restaurant_id = { [Op.ne]: excludeRestaurantId };
-    if (name) where.name = { [Op.iLike]: `%${name}%` };
-    if (minPrice !== undefined || maxPrice !== undefined) {
-      where.price = {};
-      if (minPrice !== undefined) where.price[Op.gte] = minPrice;
-      if (maxPrice !== undefined) where.price[Op.lte] = maxPrice;
-    }
-    if (validityDate) {
-      const date = new Date(validityDate);
-      where[Op.and] = [
-        { validity_start: { [Op.lte]: date } },
-        { validity_end: { [Op.gte]: date } },
-      ];
-    }
-    if (published !== undefined) where.published = published;
-    if (quantity !== undefined) where.quantity = quantity;
-  
-    // 🔹 Include base relations
-    const include = [
-      { model: Attachment, as: "attachments" },
-      { model: Restaurant, as: "restaurant" },
+  let {
+    name,
+    minPrice,
+    maxPrice,
+    validityDate,
+    published,
+    quantity,
+    menuIds,
+    restaurantId,
+    excludeRestaurantId,
+    notInMenuIds,
+  } = filters;
+
+  const { page = 1, limit = 10 } = pagination;
+  const offset = (page - 1) * limit;
+
+  const where = {};
+
+  // 🔹 Normalize string inputs to arrays
+  if (typeof menuIds === "string")
+    menuIds = menuIds.split(",").map((id) => id.trim());
+  if (typeof notInMenuIds === "string")
+    notInMenuIds = notInMenuIds.split(",").map((id) => id.trim());
+
+  // 🔹 Base filters
+  if (restaurantId) where.restaurant_id = restaurantId;
+  if (excludeRestaurantId)
+    where.restaurant_id = { [Op.ne]: excludeRestaurantId };
+  if (name) where.name = { [Op.iLike]: `%${name}%` };
+  if (minPrice !== undefined || maxPrice !== undefined) {
+    where.price = {};
+    if (minPrice !== undefined) where.price[Op.gte] = minPrice;
+    if (maxPrice !== undefined) where.price[Op.lte] = maxPrice;
+  }
+  if (validityDate) {
+    const date = new Date(validityDate);
+    where[Op.and] = [
+      { validity_start: { [Op.lte]: date } },
+      { validity_end: { [Op.gte]: date } },
     ];
-  
-    // 🔹 Case 1: Filter by menu(s)
-    if (menuIds?.length) {
-      include.push({
-        model: Menu,
-        through: { attributes: [] },
-        where: { id: { [Op.in]: menuIds } },
-        required: true, // inner join
-      });
-    }
-  
-    // 🔹 Case 2: Exclude dishes in given menu(s)
-    else if (notInMenuIds?.length) {
-      // Instead of `$Menus.id$ IS NULL` (which breaks subquery pagination),
-      // use Sequelize.literal in a NOT EXISTS subquery
-      where[Op.and] = [
-        sequelize.literal(`
-          NOT EXISTS (
-            SELECT 1
-            FROM "MenuDish" AS md
-            WHERE md."dish_id" = "Dish"."id"
-            AND md."menu_id" IN ('${notInMenuIds.join("','")}')
-          )
-        `),
-      ];
-  
-      include.push({
-        model: Menu,
-        through: { attributes: [] },
-        required: false,
-      });
-    }
-  
-    // 🔹 Case 3: Default include
-    else {
-      include.push({
-        model: Menu,
-        through: { attributes: [] },
-        required: false,
-      });
-    }
-  
-    // 🔹 Fetch paginated results
-    const { rows, count } = await Dish.findAndCountAll({
-      where,
-      include,
-      limit,
-      offset,
-      distinct: true,
-      order: [["createdAt", "DESC"]],
+  }
+  if (published !== undefined) where.published = published;
+  if (quantity !== undefined) where.quantity = quantity;
+
+  // 🔹 Include base relations
+  const include = [
+    { model: Attachment, as: "attachments" },
+    { model: Restaurant, as: "restaurant" },
+  ];
+
+  // 🔹 Case 1: Filter by menu(s)
+  if (menuIds?.length) {
+    include.push({
+      model: Menu,
+      through: { attributes: [] },
+      where: { id: { [Op.in]: menuIds } },
+      required: true, // inner join
     });
-  
-    return success(
-      "Dishes fetched successfully",
-      {
-        data: {
-          dishes: rows,
-          total: count,
-          page,
-          limit,
-          totalPages: Math.ceil(count / limit),
-        },
+  }
+
+  // 🔹 Case 2: Exclude dishes in given menu(s)
+  else if (notInMenuIds?.length) {
+    const notInCondition = sequelize.literal(`
+      NOT EXISTS (
+        SELECT 1 FROM "MenuDish" AS md
+        WHERE md."dish_id" = "Dish"."id"
+        AND md."menu_id" IN ('${notInMenuIds.join("','")}')
+      )
+    `);
+    where[Op.and] = [...(where[Op.and] || []), notInCondition];
+
+    include.push({
+      model: Menu,
+      through: { attributes: [] },
+      required: false,
+    });
+  }
+
+  // 🔹 Case 3: Default include
+  else {
+    include.push({
+      model: Menu,
+      through: { attributes: [] },
+      required: false,
+    });
+  }
+
+  // 🔹 Fetch paginated results
+  const { rows, count } = await Dish.findAndCountAll({
+    where,
+    include,
+    limit,
+    offset,
+    distinct: true,
+    order: [["createdAt", "DESC"]],
+  });
+
+  return success(
+    "Dishes fetched successfully",
+    {
+      data: {
+        dishes: rows,
+        total: count,
+        page,
+        limit,
+        totalPages: Math.ceil(count / limit),
       },
-      200
-    );
-  };
-  
+    },
+    200
+  );
+};
+
 
 
 const updateDishService = async (data, files = null) => {
-    const t = await sequelize.transaction();
-    try {
-        const {
-            id,
-            name,
-            description,
-            price,
-            quantity,
-            validity_start,
-            validity_end,
-            published,
-            menuIds, restaurant_id,
-            existingAttachmentIds = [], // Array of IDs to keep
-        } = data;
+  const t = await sequelize.transaction();
+  try {
+    const {
+      id,
+      name,
+      description,
+      price,
+      quantity,
+      validity_start,
+      validity_end,
+      published,
+      menuIds, restaurant_id,
+      existingAttachmentIds = [], // Array of IDs to keep
+    } = data;
 
-        const dish = await findDishById(id, t);
+    const dish = await findDishById(id, t);
 
-        if (!dish) {
-            await t.rollback();
-            return error('Dish not found', 404)
-        }
-
-
-        await dish.update(
-            { name, description, price, quantity, validity_start, validity_end, published, restaurant_id },
-            { transaction: t }
-        );
-
-
-        if (menuIds && menuIds.length > 0) {
-            await setDishMenusService(dish, menuIds, t);
-        }
-
-
-        const currentAttachments = await findAllAttachments(dish.id, "Dish", t)
-
-        console.log("currentAttachments", currentAttachments)
-        for (const attachment of currentAttachments) {
-            if (!existingAttachmentIds.includes(attachment.id)) {
-                await deleteAttachment(attachment, t);
-            }
-        }
-
-
-        if (files && files.length > 0) {
-            for (const file of files) {
-                await createAttachment(
-                    dish.id,
-                    "Dish",
-                    "photo",
-                    file.path,
-                    file.filename,
-                    t
-                );
-            }
-        }
-
-        await t.commit();
-
-        const updatedDish = await findDishById(dish.id);
-        return success("Dish updated successfully", updatedDish, 200)
-
-    } catch (err) {
-        if (!t.finished) await t.rollback();
-        console.error("Error updating dish:", err);
-        return error("Failed to update dish", 500)
-
+    if (!dish) {
+      await t.rollback();
+      return error('Dish not found', 404)
     }
+
+
+    await dish.update(
+      { name, description, price, quantity, validity_start, validity_end, published, restaurant_id },
+      { transaction: t }
+    );
+
+
+    if (menuIds && menuIds.length > 0) {
+      await setDishMenusService(dish, menuIds, t);
+    }
+
+
+    const currentAttachments = await findAllAttachments(dish.id, "Dish", t)
+
+    console.log("currentAttachments", currentAttachments)
+    for (const attachment of currentAttachments) {
+      if (!existingAttachmentIds.includes(attachment.id)) {
+        await deleteAttachment(attachment, t);
+      }
+    }
+
+
+    if (files && files.length > 0) {
+      for (const file of files) {
+        await createAttachment(
+          dish.id,
+          "Dish",
+          "photo",
+          file.path,
+          file.filename,
+          t
+        );
+      }
+    }
+
+    await t.commit();
+
+    const updatedDish = await findDishById(dish.id);
+    return success("Dish updated successfully", updatedDish, 200)
+
+  } catch (err) {
+    if (!t.finished) await t.rollback();
+    console.error("Error updating dish:", err);
+    return error("Failed to update dish", 500)
+
+  }
 };
 
 
 
 module.exports = {
-    createDishService,
-    findDishById,
-    updateDishService,
-    deleteDishService,
-    setDishMenusService,
-    getAllDishesService
+  createDishService,
+  findDishById,
+  updateDishService,
+  deleteDishService,
+  setDishMenusService,
+  getAllDishesService
 }

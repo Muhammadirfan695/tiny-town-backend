@@ -1,9 +1,10 @@
 const { generateQRCode } = require("../utils/qrCodes");
 
+const client_url = process.env.CLIENT_URL
 
 
-const generateRestaurantQRCodes = async (restaurantId, token) => {
-    const restaurantUrl = `https://frontend.com/restaurant/${restaurantId}?token=${token}`;
+const generateRestaurantQRCodes = async (restaurantId) => {
+    const restaurantUrl = `${client_url}restaurant/${restaurantId}`;
 
     const normal = await generateQRCode(
         restaurantUrl,
@@ -20,8 +21,8 @@ const generateRestaurantQRCodes = async (restaurantId, token) => {
     return { normal, light };
 };
 
-const generateMenuQRCodes = async (restaurantId, menuId, token) => {
-    const menuUrl = `https://frontend.com/restaurant/${restaurantId}/menu/${menuId}?token=${token}`;
+const generateMenuQRCodes = async (restaurantId, menuId) => {
+    const menuUrl = `${client_url}restaurant/${restaurantId}/menu/${menuId}`;
 
     const normal = await generateQRCode(
         menuUrl,

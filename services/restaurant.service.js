@@ -3,6 +3,9 @@ const { Restaurant, User, sequelize } = require("../models");
 const { success, error } = require("../helpers/response.helper");
 const { createAttachment, deleteAttachment, findAllAttachments, findOneAttachment } = require("./attachment.service");
 const { generateRestaurantQRCodes } = require("./qrCode.service");
+const fs = require("fs");
+const path = require("path");
+
 
 const createRestaurantService = async (data, files) => {
   const transaction = await sequelize.transaction();
@@ -55,8 +58,8 @@ const createRestaurantService = async (data, files) => {
         transaction
       );
     }
-    const token = "secure-token";
-    const qrFiles = await generateRestaurantQRCodes(newRestaurant.id, token);
+
+    const qrFiles = await generateRestaurantQRCodes(newRestaurant.id);
 
 
 
@@ -318,7 +321,17 @@ const deleteRestaurantService = async (id) => {
     for (const attachment of attachments) {
       await deleteAttachment(attachment, transaction);
     }
+    const qrPaths = [restaurant.qr_normal, restaurant.qr_light].filter(Boolean);
 
+    for (const qrPath of qrPaths) {
+      const absolutePath = path.join(__dirname, "..", qrPath);
+      if (fs.existsSync(absolutePath)) {
+        fs.unlinkSync(absolutePath);
+        console.log(`🗑️ Deleted QR code file: ${absolutePath}`);
+      } else {
+        console.warn(`⚠️ QR code not found: ${absolutePath}`);
+      }
+    }
     await restaurant.destroy({ transaction });
 
     await transaction.commit();

@@ -33,6 +33,14 @@ const Menu = sequelize.define(
       },
       onDelete: "CASCADE",
     },
+    qr_normal: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    qr_light: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
 
   },
   {

@@ -3,6 +3,10 @@ const { error, success } = require("../helpers/response.helper");
 const { Menu, sequelize, Restaurant } = require("../models");
 const { createAttachment, deleteAttachment, findOneAttachment } = require("./attachment.service");
 const { findRestaurantByIdService } = require("./restaurant.service");
+const { generateMenuQRCodes } = require("./qrCode.service");
+const fs = require("fs");
+const path = require("path");
+
 
 const findAllMenus = async (transaction = null) => {
   return await Menu.findAll({ transaction });
@@ -75,6 +79,13 @@ const createMenuService = async (data, files = null) => {
     }
 
 
+    const qrFiles = await generateMenuQRCodes(restaurant_id, menu.id);
+
+
+    await menu.update(
+      { qr_normal: qrFiles.normal, qr_light: qrFiles.light },
+      { transaction }
+    );
     await transaction.commit();
 
     return success("Menu created successfully", menu, 200)
@@ -225,7 +236,7 @@ const deleteMenuService = async (id) => {
 
   try {
     // ✅ Find menu by ID
-    const menu = await findMenuById(id,  transaction );
+    const menu = await findMenuById(id, transaction);
     if (!menu) {
       await transaction.rollback();
       return error("Menu not found", 404);
@@ -242,7 +253,17 @@ const deleteMenuService = async (id) => {
     if (existingAttachment) {
       await deleteAttachment(existingAttachment, transaction);
     }
+    const qrPaths = [menu.qr_normal, menu.qr_light].filter(Boolean);
 
+    for (const qrPath of qrPaths) {
+      const absolutePath = path.join(__dirname, "..", qrPath);
+      if (fs.existsSync(absolutePath)) {
+        fs.unlinkSync(absolutePath);
+        console.log(`🗑️ Deleted QR code file: ${absolutePath}`);
+      } else {
+        console.warn(`⚠️ QR code not found: ${absolutePath}`);
+      }
+    }
     // ✅ Delete menu itself
     await menu.destroy({ transaction });
 
