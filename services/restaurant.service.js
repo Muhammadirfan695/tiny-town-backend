@@ -10,7 +10,13 @@ const path = require("path");
 const createRestaurantService = async (data, files) => {
   const transaction = await sequelize.transaction();
   try {
-    const { owner_id, manager_id, ...restaurantData } = data;
+    const { owner_id,
+      manager_id,
+      country,
+      city,
+      latitude,
+      longitude,
+      tags, ...restaurantData } = data;
 
     if (owner_id) {
       const owner = await User.findByPk(owner_id);
@@ -30,9 +36,34 @@ const createRestaurantService = async (data, files) => {
       if (!manager) return error("Manager not found", 404);
     }
 
+    if (latitude && (isNaN(latitude) || latitude < -90 || latitude > 90)) {
+      return error("Invalid latitude value", 400);
+    }
+    if (longitude && (isNaN(longitude) || longitude < -180 || longitude > 180)) {
+      return error("Invalid longitude value", 400);
+    }
+    if (tags) {
+      if (typeof tags === "string") {
+        tags = tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter((t) => t.length > 0);
+      } else if (!Array.isArray(tags)) {
+        return error("Tags must be an array or comma-separated string", 400);
+      }
+    }
 
     const newRestaurant = await Restaurant.create(
-      { owner_id, manager_id, ...restaurantData },
+      {
+        ...restaurantData,
+        owner_id,
+        manager_id,
+        country,
+        city,
+        latitude: latitude ? parseFloat(latitude) : null,
+        longitude: longitude ? parseFloat(longitude) : null,
+        tags: tags?.length ? tags : null,
+      },
       { transaction }
     );
 
@@ -126,12 +157,24 @@ const createRestaurantService = async (data, files) => {
 
 const getAllRestaurantsService = async (query) => {
   try {
-    const { page = 1, limit = 10, search, owner_id, manager_id } = query;
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      owner_id,
+      manager_id,
+      cuisine,
+      country,
+      city,
+      tags,
+      lat,
+      lng,
+      maxDistance = 10,
+      openToday, } = query;
     const offset = (page - 1) * limit;
 
     const whereClause = {};
 
-    // 🔹 Search filter
     if (search) {
       whereClause[Op.or] = [
         { name: { [Op.iLike]: `%${search}%` } },
@@ -140,46 +183,102 @@ const getAllRestaurantsService = async (query) => {
       ];
     }
 
-    // 🔹 Owner filter
     if (owner_id) {
       whereClause.owner_id = owner_id;
     }
 
-    // 🔹 Manager filter
     if (manager_id) {
       whereClause.manager_id = manager_id;
     }
+    if (cuisine) whereClause.cuisine_type = { [Op.iLike]: `%${cuisine}%` };
+    if (country) whereClause.country = { [Op.iLike]: `%${country}%` };
+    if (city) whereClause.city = { [Op.iLike]: `%${city}%` };
+    if (tags) {
+      const tagArray = tags.split(",");
+      whereClause.tags = { [Op.overlap]: tagArray };
+    }
+    if (openToday === "true") {
+      const now = new Date();
+      const currentTime = now.toTimeString().slice(0, 5);
+      whereClause.opening_hours = { [Op.lte]: currentTime };
+      whereClause.closing_hours = { [Op.gte]: currentTime };
+    }
+    let restaurants, count;
 
-    const { count, rows } = await Restaurant.findAndCountAll({
-      where: whereClause,
-      include: [
-        {
-          model: User,
-          as: "Owner",
-          attributes: ["id", "firstName", "lastName", "email"],
+    if (lat && lng) {
+      const distanceFormula = literal(`
+        6371 * acos(
+          cos(radians(${lat}))
+          * cos(radians("latitude"))
+          * cos(radians("longitude") - radians(${lng}))
+          + sin(radians(${lat})) * sin(radians("latitude"))
+        )
+      `);
+      const result = await Restaurant.findAndCountAll({
+        attributes: {
+          include: [[distanceFormula, "distance"]],
         },
-        {
-          model: User,
-          as: "Manager",
-          attributes: ["id", "firstName", "lastName", "email"],
-        },
-        {
-          association: "attachments",
-          attributes: ["attachment_type", "image_path"],
-        },
-      ],
-      limit: parseInt(limit),
-      offset: parseInt(offset),
-      order: [["createdAt", "DESC"]],
-      distinct: true,
-    });
+        where: whereClause,
+        having: literal(`distance <= ${maxDistance}`),
+        order: [[literal("distance"), "ASC"]],
+        limit: parseInt(limit),
+        offset: parseInt(offset),
 
+        include: [
+          {
+            model: User,
+            as: "Owner",
+            attributes: ["id", "firstName", "lastName", "email"],
+          },
+          {
+            model: User,
+            as: "Manager",
+            attributes: ["id", "firstName", "lastName", "email"],
+          },
+          {
+            association: "attachments",
+            attributes: ["attachment_type", "image_path"],
+          },
+        ],
+        distinct: true,
+      });
+      count = result.count.length || result.count;
+      restaurants = result.rows;
+    } else {
+
+      const result = await Restaurant.findAndCountAll({
+        where: whereClause,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [["createdAt", "DESC"]],
+        distinct: true,
+        include: [
+          {
+            model: User,
+            as: "Owner",
+            attributes: ["id", "firstName", "lastName", "email"],
+          },
+          {
+            model: User,
+            as: "Manager",
+            attributes: ["id", "firstName", "lastName", "email"],
+          },
+          {
+            association: "attachments",
+            attributes: ["attachment_type", "image_path"],
+          },
+        ],
+      });
+
+      count = result.count;
+      restaurants = result.rows;
+    }
     return success("Restaurants fetched successfully", {
       data: {
         total: count,
         totalPages: Math.ceil(count / limit),
         currentPage: parseInt(page),
-        restaurants: rows,
+        restaurants: restaurants,
       },
     });
   } catch (err) {
@@ -238,7 +337,6 @@ const updateRestaurantService = async (id, data, files, userRole) => {
         return error("Owner not found", 404);
       }
 
-      // ✅ Prevent assigning an owner who already owns another restaurant
       const existingOwnerRestaurant = await Restaurant.findOne({
         where: { owner_id: data.owner_id },
         transaction,
@@ -256,13 +354,44 @@ const updateRestaurantService = async (id, data, files, userRole) => {
         return error("Manager not found", 404);
       }
     }
+    const { latitude, longitude } = data;
+    if (latitude && (isNaN(latitude) || latitude < -90 || latitude > 90)) {
+      await transaction.rollback();
+      return error("Invalid latitude value", 400);
+    }
+
+    if (longitude && (isNaN(longitude) || longitude < -180 || longitude > 180)) {
+      await transaction.rollback();
+      return error("Invalid longitude value", 400);
+    }
+
+    if (data.tags) {
+      if (typeof data.tags === "string") {
+        data.tags = data.tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter((t) => t.length > 0);
+      } else if (!Array.isArray(data.tags)) {
+        await transaction.rollback();
+        return error("Tags must be an array or comma-separated string", 400);
+      }
+    }
+
     if (data.service_model && typeof data.service_model === "string") {
       try {
         data.service_model = JSON.parse(data.service_model);
-      } catch (e) { }
+      }  catch (e) {
+        await transaction.rollback();
+        return error("Invalid JSON format for service_model", 400);
+      }
     }
 
-    await restaurant.update(data, { transaction });
+    await restaurant.update({
+      ...data,
+      latitude: latitude ? parseFloat(latitude) : null,
+      longitude: longitude ? parseFloat(longitude) : null,
+      tags: data.tags?.length ? data.tags : null,
+    }, { transaction });
 
     if (files?.logo) {
       const oldLogo = await findOneAttachment(
@@ -300,7 +429,10 @@ const updateRestaurantService = async (id, data, files, userRole) => {
     }
 
     await transaction.commit();
-    return findRestaurantByIdService(id);
+    const updatedRestaurant = await Restaurant.findByPk(id, {
+      include: ["Owner", "Manager", "attachments"],
+    });
+    return success("Restaurant updated successfully", updatedRestaurant);
   } catch (err) {
     await transaction.rollback();
     console.error("Error in updateRestaurantService:", err);

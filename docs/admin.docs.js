@@ -598,7 +598,7 @@
  *                 example: "123 Food Street, Downtown"
  *               phone_number:
  *                 type: string
- *                 example: "0300-1234567"
+ *                 example: "+92-300-1234567"
  *               opening_hours:
  *                 type: string
  *                 example: "11:00 AM"
@@ -619,21 +619,39 @@
  *               owner_id:
  *                 type: string
  *                 format: uuid
- *                 description: "The UUID of an existing user with the 'Owner' role."
+ *                 description: "UUID of an existing user with the 'Owner' role."
  *                 example: "5341beb8-685b-4872-99df-c89eee5b1db0"
  *               manager_id:
  *                 type: string
  *                 format: uuid
- *                 description: "The UUID of an existing user with the 'Manager' role."
+ *                 description: "UUID of an existing user with the 'Manager' role."
  *                 example: "4c72cf2c-781a-488f-bcea-ea19171d3f9f"
+ *               country:
+ *                 type: string
+ *                 example: "Pakistan"
+ *               city:
+ *                 type: string
+ *                 example: "Lahore"
+ *               latitude:
+ *                 type: number
+ *                 format: float
+ *                 example: 31.5204
+ *               longitude:
+ *                 type: number
+ *                 format: float
+ *                 example: 74.3587
+ *               tags:
+ *                 type: string
+ *                 description: "Comma-separated tags or array of tags."
+ *                 example: "pizza,fast food,dine-in"
  *               logo:
  *                 type: string
  *                 format: binary
- *                 description: The restaurant's logo image file (.png, .jpg, etc.).
+ *                 description: "The restaurant's logo image file (.png, .jpg, etc.)."
  *               header_image:
  *                 type: string
  *                 format: binary
- *                 description: The restaurant's header/banner image file.
+ *                 description: "The restaurant's header/banner image file."
  *     responses:
  *       201:
  *         description: Restaurant created successfully.
@@ -642,13 +660,24 @@
  *             schema:
  *               $ref: '#/components/schemas/Restaurant'
  *       400:
- *         description: Bad Request (e.g., Owner/Manager ID not found).
+ *         description: Bad Request (e.g., invalid coordinates or invalid tags format).
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 succeeded:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid latitude value"
  *       401:
  *         description: Unauthorized (invalid or missing token).
  *       403:
  *         description: Forbidden (user is not an Admin).
  *       422:
- *         description: Validation Failed (e.g., name is empty, email is invalid).
+ *         description: Validation Failed (e.g., missing required fields or invalid format).
  *         content:
  *           application/json:
  *             schema:
@@ -666,6 +695,7 @@
  *                     type: object
  *                     example: {"name": "Name is required."}
  */
+
 
 /**
  * @swagger
@@ -694,10 +724,70 @@
  *         name: search
  *         schema:
  *           type: string
- *         description: A search term to filter restaurants by name, address, or cuisine type.
+ *         description: Search term to filter restaurants by name, address, or cuisine type.
+ *       - in: query
+ *         name: owner_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter restaurants by their owner ID.
+ *       - in: query
+ *         name: manager_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter restaurants by their manager ID.
+ *       - in: query
+ *         name: cuisine
+ *         schema:
+ *           type: string
+ *         description: Filter by cuisine type (e.g., Italian, Chinese, etc.).
+ *       - in: query
+ *         name: country
+ *         schema:
+ *           type: string
+ *         description: Filter by country.
+ *       - in: query
+ *         name: city
+ *         schema:
+ *           type: string
+ *         description: Filter by city.
+ *       - in: query
+ *         name: tags
+ *         schema:
+ *           type: string
+ *           example: "family,outdoor"
+ *         description: Filter by one or more tags (comma-separated).
+ *       - in: query
+ *         name: lat
+ *         schema:
+ *           type: number
+ *           format: float
+ *           example: 31.5204
+ *         description: Latitude for distance-based filtering.
+ *       - in: query
+ *         name: lng
+ *         schema:
+ *           type: number
+ *           format: float
+ *           example: 74.3587
+ *         description: Longitude for distance-based filtering.
+ *       - in: query
+ *         name: maxDistance
+ *         schema:
+ *           type: number
+ *           format: float
+ *           default: 10
+ *         description: Maximum distance (in kilometers) from the provided latitude and longitude.
+ *       - in: query
+ *         name: openToday
+ *         schema:
+ *           type: boolean
+ *           example: true
+ *         description: Filter restaurants that are currently open based on opening and closing hours.
  *     responses:
  *       200:
- *         description: A list of restaurants.
+ *         description: A list of restaurants matching the filter criteria.
  *         content:
  *           application/json:
  *             schema:
@@ -721,7 +811,7 @@
  *                     currentPage:
  *                       type: integer
  *                       example: 1
- *                     data:
+ *                     restaurants:
  *                       type: array
  *                       items:
  *                         $ref: '#/components/schemas/Restaurant'
@@ -729,7 +819,10 @@
  *         description: Unauthorized.
  *       403:
  *         description: Forbidden.
+ *       500:
+ *         description: Internal server error.
  */
+
 
 /**
  * @swagger
@@ -786,53 +879,114 @@
  *                 type: string
  *                 format: uuid
  *                 description: The unique ID of the restaurant to update.
+ *                 example: "a8b4c7e2-91d9-4b2b-bdf8-f7a54e8cd2b2"
  *               name:
  *                 type: string
  *                 description: Restaurant name.
+ *                 example: "Pizza Palace"
  *               description:
  *                 type: string
  *                 description: Description of the restaurant.
+ *                 example: "Authentic Italian pizzas made with fresh ingredients."
  *               address:
  *                 type: string
- *                 description: Address of the restaurant.
+ *                 description: Restaurant address.
+ *                 example: "123 Food Street, Downtown"
+ *               country:
+ *                 type: string
+ *                 example: "Pakistan"
+ *               city:
+ *                 type: string
+ *                 example: "Lahore"
+ *               latitude:
+ *                 type: number
+ *                 format: float
+ *                 description: Latitude between -90 and 90.
+ *                 example: 31.582045
+ *               longitude:
+ *                 type: number
+ *                 format: float
+ *                 description: Longitude between -180 and 180.
+ *                 example: 74.329376
+ *               phone_number:
+ *                 type: string
+ *                 example: "+923001234567"
+ *               contact_email:
+ *                 type: string
+ *                 format: email
+ *                 example: "info@pizzapalace.com"
+ *               cuisine_type:
+ *                 type: string
+ *                 example: "Italian"
+ *               service_model:
+ *                 type: string
+ *                 description: A JSON array string (e.g., '["dine-in", "takeaway", "delivery"]').
+ *                 example: '["dine-in", "takeaway"]'
+ *               tags:
+ *                 type: string
+ *                 description: Comma-separated string or array of tags.
+ *                 example: "family,fast-food,casual"
  *               owner_id:
  *                 type: string
  *                 format: uuid
  *                 description: New Owner ID (Admin only).
+ *                 example: "5341beb8-685b-4872-99df-c89eee5b1db0"
  *               manager_id:
  *                 type: string
  *                 format: uuid
  *                 description: New Manager ID (Admin only).
+ *                 example: "4c72cf2c-781a-488f-bcea-ea19171d3f9f"
  *               logo:
  *                 type: string
  *                 format: binary
  *                 description: Optional logo file upload.
- *               phone:
+ *               header_image:
  *                 type: string
- *                 description: Restaurant contact number.
- *               email:
- *                 type: string
- *                 description: Restaurant email address.
- *               website:
- *                 type: string
- *                 description: Restaurant website URL.
- *               published:
- *                 type: boolean
- *                 description: Whether the restaurant is published.
+ *                 format: binary
+ *                 description: Optional header/banner image file upload.
  *     responses:
  *       200:
  *         description: Restaurant updated successfully.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Restaurant'
+ *               type: object
+ *               properties:
+ *                 succeeded:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Restaurant updated successfully"
+ *                 data:
+ *                   $ref: '#/components/schemas/Restaurant'
  *       400:
- *         description: Bad Request or validation error.
+ *         description: Bad Request — validation or JSON parsing error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 succeeded:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Validation failed"
+ *                 errors:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     example: {"latitude": "Latitude must be between -90 and 90"}
+ *       403:
+ *         description: Forbidden — Only admins can reassign owner or manager.
  *       404:
  *         description: Restaurant not found.
- *       403:
- *         description: Forbidden (e.g., Manager trying to change the owner).
+ *       500:
+ *         description: Server error while updating restaurant.
  */
+
+
 
 /**
  * @swagger
