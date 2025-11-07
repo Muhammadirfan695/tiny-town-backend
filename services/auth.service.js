@@ -6,7 +6,7 @@ const {
 const { success, error } = require("../helpers/response.helper");
 const { passwordsMatch } = require("../helpers/validation.helper");
 const { sequelize, Role, Attachment, Restaurant } = require("../models");
-const { sendMagicLink, sendOTPtoResetPassword } = require("./email.service");
+const { sendMagicLink, sendOTPtoResetPassword, sendRequestNotify, sendAcceptRejectNotify } = require("./email.service");
 const {
   getRoleByName,
   assignRole,
@@ -29,6 +29,8 @@ const {
   createOtpWithExpiry,
 } = require("./user.service");
 const bcrypt = require("bcrypt");
+const SignupRequest = require("../models/signUpRequest.model");
+const { sendEmail } = require("../utils/sendEmail");
 loginService = async (email, password) => {
   try {
     if (!email || !password) {
@@ -343,6 +345,93 @@ const createUserService = async (data) => {
   }
 };
 
+
+
+const createUserByRoleService = async (data) => {
+  try {
+    const { firstName, lastName, email, password, role } = data;
+
+    if (!firstName || !lastName || !email || !password || !role)
+      return error("All fields are required", 400);
+
+    const existingUser = await User.findOne({ where: { email } });
+    const existingRequest = await SignupRequest.findOne({ where: { email } });
+
+    if (existingUser) return error("User already registered", 400);
+    if (existingRequest) return error("A signup request already exists", 400);
+
+    const request = await SignupRequest.create({
+      firstName,
+      lastName,
+      email,
+      password,
+      role,
+      status: "Pending",
+    });
+
+    await sendRequestNotify(email, firstName, role)
+
+
+
+    return success("Signup request submitted successfully", { request });
+  } catch (err) {
+    console.error("Signup request error:", err);
+    return error("Failed to submit signup request", 500);
+  }
+};
+
+
+const approveOrRejectSignupRequestService = async (body, reason) => {
+  const transaction = await sequelize.transaction();
+  const { id, action } = body
+  try {
+    const request = await SignupRequest.findByPk(id);
+    if (!request) return error("Signup request not found", 404);
+
+    if (action === "approve") {
+      const user = await User.create(
+        {
+          firstName: request.firstName,
+          lastName: request.lastName,
+          email: request.email,
+          password: request.password,
+          verified: true,
+          verified_at: new Date(),
+        },
+        { transaction }
+      );
+
+      await request.update({ status: "Approved" }, { transaction });
+      const role = await getRoleByName(request.role);
+      if (!role) {
+        return error(`Role "${request.role}" does not exist`, 400);
+      }
+      console.log("eeeee", role)
+      await assignRole(user.id, role.id, transaction);
+      await transaction.commit();
+
+      await sendAcceptRejectNotify(request.email, "Approved", request.firstName, request.role)
+
+      return success("Signup request approved and user created successfully", user);
+    }
+
+    if (action === "reject") {
+      await request.update({ status: "Rejected", reason }, { transaction });
+      await transaction.commit();
+
+      await sendAcceptRejectNotify(request.email, "Rejected", request.firstName, request.role)
+      return success("Signup request rejected successfully");
+    }
+
+    return error("Invalid action", 400);
+  } catch (err) {
+    await transaction.rollback();
+    console.error("Approval error:", err);
+    return error("Failed to update signup request", 500);
+  }
+};
+
+
 module.exports = {
   loginService,
   loginMagicLink,
@@ -351,4 +440,6 @@ module.exports = {
   resetPasswordService,
   changePasswordService,
   createUserService,
+  createUserByRoleService,
+  approveOrRejectSignupRequestService
 };

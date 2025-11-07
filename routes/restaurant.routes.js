@@ -15,9 +15,9 @@ const { createRestaurant,
 const { upload } = require('../utils/uploadImage');
 
 
-router.get('/restaurant', apiKeyAuth, authorize('Admin', 'Manager', 'Owner'), getAllRestaurants);
+router.get('/restaurant', apiKeyAuth, authorize('Admin', 'Manager', 'Owner', "User"), getAllRestaurants);
 
-router.get('/restaurant/:id', apiKeyAuth, authorize('Admin', 'Manager', 'Owner'), getRestaurantById);
+router.get('/restaurant/:id', apiKeyAuth, authorize('Admin', 'Manager', 'Owner', "User"), getRestaurantById);
 
 router.patch(
     '/restaurant', apiKeyAuth,
@@ -30,7 +30,7 @@ router.patch(
 );
 
 
-router.post("/add-favourites",  authorize('User'), addToFavourites);
-router.delete("/remove-favourites/:restaurant_id",  authorize('User'), removeFromFavourites);
-router.get("/favourites",  authorize('User'), getUserFavourites );
+router.post("/add-favourites", authorize('User'), addToFavourites);
+router.delete("/remove-favourites/:restaurant_id", authorize('User'), removeFromFavourites);
+router.get("/favourites", authorize('User'), getUserFavourites);
 module.exports = router;

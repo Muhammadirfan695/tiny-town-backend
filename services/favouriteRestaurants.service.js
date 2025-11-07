@@ -49,10 +49,10 @@ const removeFromFavouritesService = async (user, restaurant_id) => {
 /**
  * Get all user's favourite restaurants
  */
-const getUserFavouritesService = async (user) => {
+const getUserFavouritesService = async (userId) => {
   try {
     const favourites = await FavouriteRestaurant.findAll({
-      where: { user_id: user.id },
+      where: { user_id: userId },
       include: [
         {
           model: Restaurant,

@@ -563,6 +563,78 @@
  *         description: Internal server error
  */
 
+
+/**
+ * @swagger
+ * /api/admin/accept-reject:
+ *   post:
+ *     summary: Approve or reject a signup request
+ *     description: >
+ *       Allows admin to approve or reject a pending signup request.  
+ *       If approved — a new user account is created automatically, assigned the role from the signup request, and notified via email.  
+ *       If rejected — the request is marked as rejected with a reason and the user is notified by email.
+ *     tags:
+ *       - Admin
+ *     security:
+ *       - bearerAuth: []
+ *       - AdminApiKeyAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - id
+ *               - action
+ *             properties:
+ *               id:
+ *                 type: string
+ *                 format: uuid
+ *                 description: ID of the signup request to act upon
+ *                 example: "f9a5b3b0-3c2d-4b85-b5ad-8c92fa2e5f7c"
+ *               action:
+ *                 type: string
+ *                 enum: [approve, reject]
+ *                 description: Action to perform on the signup request
+ *               reason:
+ *                 type: string
+ *                 description: Optional reason for rejection (required only when action is "reject")
+ *                 example: "Insufficient details provided"
+ *     responses:
+ *       200:
+ *         description: Signup request processed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Signup request approved and user created successfully
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       format: uuid
+ *                     firstName:
+ *                       type: string
+ *                     lastName:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *       400:
+ *         description: Invalid action or missing data
+ *       404:
+ *         description: Signup request not found
+ *       500:
+ *         description: Internal server error
+ */
+
 /**
  * @swagger
  * /api/admin/restaurant:
