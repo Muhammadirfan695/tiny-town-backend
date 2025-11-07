@@ -108,12 +108,12 @@ const createRestaurantValidationRules = () => {
       }),
 
     body("owner_id")
-      .optional()
+      .optional({ checkFalsy: true, nullable: true })
       .isUUID()
       .withMessage("Owner ID must be a valid UUID."),
 
     body("manager_id")
-      .optional()
+      .optional({ checkFalsy: true, nullable: true })
       .isUUID()
       .withMessage("Manager ID must be a valid UUID."),
   ];

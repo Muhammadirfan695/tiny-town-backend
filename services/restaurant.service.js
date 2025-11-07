@@ -10,14 +10,13 @@ const path = require("path");
 const createRestaurantService = async (data, files) => {
   const transaction = await sequelize.transaction();
   try {
-    const { owner_id,
+    let { owner_id,
       manager_id,
       country,
       city,
       latitude,
       longitude,
       tags, ...restaurantData } = data;
-
     if (owner_id) {
       const owner = await User.findByPk(owner_id);
       if (!owner) return error("Owner not found", 404);
@@ -56,8 +55,8 @@ const createRestaurantService = async (data, files) => {
     const newRestaurant = await Restaurant.create(
       {
         ...restaurantData,
-        owner_id,
-        manager_id,
+        owner_id: owner_id ? owner_id : null,
+        manager_id: manager_id ? manager_id : null,
         country,
         city,
         latitude: latitude ? parseFloat(latitude) : null,
@@ -323,6 +322,16 @@ const updateRestaurantService = async (id, data, files, userRole) => {
       return error("Restaurant not found", 404);
     }
 
+    // ✅ Convert empty or invalid UUID strings to null
+    ["owner_id", "manager_id"].forEach((key) => {
+      if (data[key] === "" || data[key] === "null" || data[key] === null) {
+        data[key] = null;
+      }
+    });
+
+    console.log("data---", data);
+
+    // ✅ Restrict non-admin users from changing owner/manager
     if ((data.owner_id || data.manager_id) && userRole !== "Admin") {
       await transaction.rollback();
       return error(
@@ -330,6 +339,8 @@ const updateRestaurantService = async (id, data, files, userRole) => {
         403
       );
     }
+
+    // ✅ Validate new owner
     if (data.owner_id && userRole === "Admin") {
       const newOwner = await User.findByPk(data.owner_id);
       if (!newOwner) {
@@ -347,6 +358,8 @@ const updateRestaurantService = async (id, data, files, userRole) => {
         return error("This owner already has a restaurant assigned.", 400);
       }
     }
+
+    // ✅ Validate new manager
     if (data.manager_id && userRole === "Admin") {
       const newManager = await User.findByPk(data.manager_id);
       if (!newManager) {
@@ -354,6 +367,8 @@ const updateRestaurantService = async (id, data, files, userRole) => {
         return error("Manager not found", 404);
       }
     }
+
+    // ✅ Latitude & Longitude validation
     const { latitude, longitude } = data;
     if (latitude && (isNaN(latitude) || latitude < -90 || latitude > 90)) {
       await transaction.rollback();
@@ -365,6 +380,7 @@ const updateRestaurantService = async (id, data, files, userRole) => {
       return error("Invalid longitude value", 400);
     }
 
+    // ✅ Handle tags (array or comma-separated string)
     if (data.tags) {
       if (typeof data.tags === "string") {
         data.tags = data.tags
@@ -377,29 +393,30 @@ const updateRestaurantService = async (id, data, files, userRole) => {
       }
     }
 
+    // ✅ Parse service_model JSON if string
     if (data.service_model && typeof data.service_model === "string") {
       try {
         data.service_model = JSON.parse(data.service_model);
-      }  catch (e) {
+      } catch (e) {
         await transaction.rollback();
         return error("Invalid JSON format for service_model", 400);
       }
     }
 
-    await restaurant.update({
-      ...data,
-      latitude: latitude ? parseFloat(latitude) : null,
-      longitude: longitude ? parseFloat(longitude) : null,
-      tags: data.tags?.length ? data.tags : null,
-    }, { transaction });
+    // ✅ Update restaurant
+    await restaurant.update(
+      {
+        ...data,
+        latitude: latitude ? parseFloat(latitude) : null,
+        longitude: longitude ? parseFloat(longitude) : null,
+        tags: data.tags?.length ? data.tags : null,
+      },
+      { transaction }
+    );
 
+    // ✅ Handle logo file upload
     if (files?.logo) {
-      const oldLogo = await findOneAttachment(
-        id,
-        "Restaurant",
-        "logo",
-        transaction
-      );
+      const oldLogo = await findOneAttachment(id, "Restaurant", "logo", transaction);
       if (oldLogo) await deleteAttachment(oldLogo, transaction);
       await createAttachment(
         id,
@@ -410,13 +427,10 @@ const updateRestaurantService = async (id, data, files, userRole) => {
         transaction
       );
     }
+
+    // ✅ Handle header image upload
     if (files?.header_image) {
-      const oldHeader = await findOneAttachment(
-        id,
-        "Restaurant",
-        "header_image",
-        transaction
-      );
+      const oldHeader = await findOneAttachment(id, "Restaurant", "header_image", transaction);
       if (oldHeader) await deleteAttachment(oldHeader, transaction);
       await createAttachment(
         id,
@@ -429,9 +443,12 @@ const updateRestaurantService = async (id, data, files, userRole) => {
     }
 
     await transaction.commit();
+
+    // ✅ Fetch updated restaurant with relations
     const updatedRestaurant = await Restaurant.findByPk(id, {
       include: ["Owner", "Manager", "attachments"],
     });
+
     return success("Restaurant updated successfully", updatedRestaurant);
   } catch (err) {
     await transaction.rollback();
@@ -439,6 +456,7 @@ const updateRestaurantService = async (id, data, files, userRole) => {
     return error("Failed to update restaurant", 500);
   }
 };
+
 
 const deleteRestaurantService = async (id) => {
   const transaction = await sequelize.transaction();
