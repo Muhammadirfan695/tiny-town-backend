@@ -285,3 +285,99 @@
  *       500:
  *         description: Server error while updating restaurant.
  */
+
+
+/**
+ * @swagger
+ * /api/restaurants/add-favourites:
+ *   post:
+ *     summary: Add a restaurant to the user's favorites
+ *     description: Allows a user (role "user") to add a restaurant to their list of favorites.
+ *     tags: [Restaurant]
+ *     security:
+ *       - bearerAuth: []
+ *       - ApiKeyAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - restaurant_id
+ *             properties:
+ *               restaurant_id:
+ *                 type: string
+ *                 format: uuid
+ *                 example: "d1f2a345-678b-4c9e-b123-7a5e8a1f5c3b"
+ *     responses:
+ *       201:
+ *         description: Restaurant added to favorites successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/FavouriteRestaurant'
+ *       400:
+ *         description: Invalid input or already favorited.
+ *       403:
+ *         description: Forbidden — only users with role "user" can add favorites.
+ *       404:
+ *         description: Restaurant not found.
+ *       500:
+ *         description: Internal server error.
+ */
+
+/**
+ * @swagger
+ * /api/restaurants/remove-favourites/{restaurant_id}:
+ *   delete:
+ *     summary: Remove a restaurant from user's favorites
+ *     description: Allows a user (role "user") to remove a restaurant from their favorites list..
+ *     tags: [Restaurant]
+ *     security:
+ *       - bearerAuth: []
+ *       - ApiKeyAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: restaurant_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: The ID of the restaurant to remove from favorites.
+ *     responses:
+ *       200:
+ *         description: Restaurant removed from favorites successfully.
+ *       403:
+ *         description: Forbidden — only users with role "user" can remove favorites.
+ *       404:
+ *         description: Favorite not found.
+ *       500:
+ *         description: Internal server error.
+ */
+
+
+/**
+ * @swagger
+ * /api/restaurants/favourites:
+ *   get:
+ *     summary: Get user's favorite restaurants
+ *     description: Fetch all restaurants added to favorites by the logged-in user..
+ *     tags: [Restaurant]
+ *     security:
+ *       - bearerAuth: []
+ *       - ApiKeyAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully fetched favorite restaurants.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/FavouriteRestaurant'
+ *       401:
+ *         description: Unauthorized — missing or invalid token.
+ *       500:
+ *         description: Internal server error.
+ */

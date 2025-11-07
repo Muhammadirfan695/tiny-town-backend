@@ -6,7 +6,10 @@ const { createRestaurant,
     getAllRestaurants,
     getRestaurantById,
     updateRestaurant,
-    deleteRestaurant
+    deleteRestaurant,
+    getUserFavourites,
+    removeFromFavourites,
+    addToFavourites
 
 } = require('../controllers/restaurant.controller');
 const { upload } = require('../utils/uploadImage');
@@ -27,5 +30,7 @@ router.patch(
 );
 
 
-
+router.post("/add-favourites",  authorize('User'), addToFavourites);
+router.delete("/remove-favourites/:restaurant_id",  authorize('User'), removeFromFavourites);
+router.get("/favourites",  authorize('User'), getUserFavourites );
 module.exports = router;
