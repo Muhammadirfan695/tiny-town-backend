@@ -62,25 +62,24 @@ loginService = async (email, password) => {
     if (!match) {
       return error("Invalid Credentials", 401);
     }
-    const roleNames = await getAllUserRolesById(user.id); // This returns ["Admin"]
+    const roleNames = await getAllUserRolesById(user.id); 
 
-    // 2. Get the FIRST role from the array.
-    const primaryRole = roleNames?.[0]; // This will be the string "Admin"
+ 
+    const primaryRole = roleNames?.[0]; 
 
     if (!primaryRole) {
       return error("User has no assigned role.", 500);
     }
 
-    // 3. Create the token with the SIMPLE STRING.
+    
     const token = createAuthToken(user.id, primaryRole);
-    // ------------------------------------
 
     const { password: _, ...userData } = user.toJSON();
 
     return success("Login Successfully", {
       user: {
         ...userData,
-        role: primaryRole, // Return the simple string to the frontend
+        role: primaryRole, 
         token,
       },
     });
@@ -88,23 +87,6 @@ loginService = async (email, password) => {
     console.error("!!! LOGIN SERVICE CRASHED !!!", e);
     return error("An internal server error occurred.", 500);
   }
-  // const roleName = await getAllUserRolesById(user.id);
-  // const token = createAuthToken(user.id, roleName);
-
-  //     const { password: _, ...userData } = user.toJSON();
-
-  //     return success("Login Successfully", {
-  //         user: {
-  //             ...userData,
-  //             role: roleName,
-  //             token,
-  //         },
-  //     });
-
-  // } catch (e) {
-  //     console.error("!!! LOGIN SERVICE CRASHED !!!", e);
-  //     return error("An internal server error occurred.", 500);
-  // }
 };
 
 const loginMagicLink = async (email) => {
@@ -122,28 +104,6 @@ const loginMagicLink = async (email) => {
   }
 };
 
-// const loginWithMagicLink = async (token) => {
-//     if (!token) {
-//         return error("Magic token is required", 400);
-//     }
-
-//     const user = await findByMagicLink(token)
-
-//     if (!user) {
-//         return error("Invalid or expired magic link", 400);
-//     }
-//     await clearMagicLinkToken(user)
-//     const roleName = await getAllUserRolesById(user.id);
-//     const authToken = createAuthToken(user.id, roleName);
-//     const { password: _, ...userData } = user.toJSON();
-//     return success("Login Successfully", {
-//         user: {
-//             ...userData,
-//             role: roleName,
-//             token: authToken,
-//         },
-//     });
-// };
 
 const loginWithMagicLink = async (token) => {
   const { error, success } = require("../helpers/response.helper");
@@ -273,39 +233,6 @@ const changePasswordService = async (
   }
 };
 
-// const changePasswordService = async (id, currentPassword, newPassword, confirmPassword) => {
-//     try {
-//         if (!currentPassword || !newPassword || !confirmPassword) {
-//             return error("All password fields are required", 400);
-//         }
-
-//         const user = await findUserById(id);
-//         if (!user) {
-//             return error("User not found", 404);
-//         }
-
-//         // Use bcrypt.compare directly for clarity and safety
-//         const isCurrentPasswordCorrect = await bcrypt.compare(currentPassword, user.password);
-//         if (!isCurrentPasswordCorrect) {
-//             return error("Your current password is incorrect.", 403);
-//         }
-
-//         if (!passwordsMatch(newPassword, confirmPassword)) {
-//             return error("New password and confirmation do not match.", 400);
-//         }
-
-//         // The user model's 'beforeUpdate' hook will automatically hash the new password
-//         user.password = newPassword;
-//         await user.save();
-
-//         return success("Password changed successfully!", 200);
-
-//     } catch (err) {
-//         console.error("!!! changePasswordService CRASHED !!!", err);
-//         return error("An internal server error occurred.", 500);
-//     }
-// };
-
 const createUserService = async (data) => {
   try {
     if (!data.firstName || !data.lastName || !data.email || !data.role) {
@@ -338,7 +265,6 @@ const createUserService = async (data) => {
       user: userData,
       link: link,
     });
-    // return success("User created and Magic Link Sent Successfully", { link });
   } catch (err) {
     console.error(err);
     return error(err.message || "Failed to create user", 500);

@@ -39,7 +39,6 @@ const createDishValidator = [
             return true;
         }),
 
-    // ✅ Ensure start <= end if both exist
     body().custom((_, { req }) => {
         const { validity_start, validity_end } = req.body;
         if (validity_start && validity_end) {
@@ -57,7 +56,7 @@ const createDishValidator = [
         .withMessage("Published must be true or false."),
     body().custom((_, { req }) => {
         if (!req.files || req.files.length === 0) {
-            return true; // No attachments → fine
+            return true; 
         }
 
         const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/webp"];
@@ -125,7 +124,6 @@ const updateDishValidator = [
             return true;
         }),
 
-    // ✅ Ensure start <= end if both exist
     body().custom((_, { req }) => {
         const { validity_start, validity_end } = req.body;
         if (validity_start && validity_end) {

@@ -26,7 +26,7 @@ const createMenuValidator = [
         .withMessage("Timing end must be a valid time (HH:mm or HH:mm:ss)")
         .custom((timingEnd, { req }) => {
             const timingStart = req.body.timingStart;
-            if (!timingStart) return true; // Skip if not provided (handled by other rule)
+            if (!timingStart) return true;
 
             const [hStart, mStart] = timingStart.split(":").map(Number);
             const [hEnd, mEnd] = timingEnd.split(":").map(Number);
@@ -79,7 +79,7 @@ const updateMenuValidator = [
         .withMessage("Timing end must be a valid time (HH:mm or HH:mm:ss)")
         .custom((timingEnd, { req }) => {
             const timingStart = req.body.timingStart;
-            if (!timingStart) return true; // Skip if not provided (handled by other rule)
+            if (!timingStart) return true; 
 
             const [hStart, mStart] = timingStart.split(":").map(Number);
             const [hEnd, mEnd] = timingEnd.split(":").map(Number);

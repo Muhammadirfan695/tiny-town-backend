@@ -5,6 +5,7 @@ const { upload } = require("../utils/uploadImage");
 const restaurantRoutes = require('./restaurant.routes');
 const menuRoutes = require('./menu.routes')
 const dishRoutes = require('./dish.routes')
+const dashboardRoutes = require("./dashboard.routes")
 const { createRestaurantValidationRules, validate } = require("../validations/restaurant.validator");
 const { createRestaurant, deleteRestaurant } = require("../controllers/restaurant.controller");
 
@@ -21,6 +22,7 @@ router.post('/accept-reject', apiKeyAuth, authorize("Admin"), signupApprovalReje
 router.use('/', restaurantRoutes);
 router.use('/', menuRoutes)
 router.use('/', dishRoutes)
+router.use('/dashboard', dashboardRoutes)
 router.post(
     '/restaurant',
     authorize('Admin'),

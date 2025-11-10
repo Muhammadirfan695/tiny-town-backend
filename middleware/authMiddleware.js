@@ -21,7 +21,6 @@ const protect = expressAsyncHandler(async (req, res, next) => {
       });
     }
 
-    // ✅ Verify token
     jwt.verify(token, process.env.JWT_SECRET, (err, decodedToken) => {
       if (err) {
         if (err.name === "TokenExpiredError") {
@@ -47,7 +46,7 @@ const protect = expressAsyncHandler(async (req, res, next) => {
         }
       }
       console.log("decodedToken", decodedToken)
-      // ✅ Attach decoded data to req
+
       req.userId = decodedToken.id;
       req.userRole = decodedToken.role;
       next();
@@ -66,7 +65,6 @@ const authorize = (...allowedRoles) =>
   expressAsyncHandler(async (req, res, next) => {
     let token;
     try {
-      // ✅ Extract Bearer token
       if (
         req.headers.authorization &&
         req.headers.authorization.startsWith("Bearer")
@@ -81,7 +79,6 @@ const authorize = (...allowedRoles) =>
         });
       }
 
-      // ✅ Verify token
       jwt.verify(token, process.env.JWT_SECRET, (err, decodedToken) => {
         if (err) {
           if (err.name === "TokenExpiredError") {
@@ -102,12 +99,9 @@ const authorize = (...allowedRoles) =>
           }
         }
 
-
-        // ✅ Attach decoded data
         req.userId = decodedToken.id;
         req.userRole = decodedToken.role;
 
-        // ✅ Role check
         if (allowedRoles.length && !allowedRoles.includes(req.userRole)) {
           return res.status(403).json({
             succeeded: false,
@@ -147,8 +141,7 @@ const apiKeyAuth = (req, res, next) => {
     }
     return next();
   }
-
-  // ✅ All other routes
+u
   if (!reqApiKey || reqApiKey !== regularKey) {
     return res.status(401).json({
       succeeded: false,

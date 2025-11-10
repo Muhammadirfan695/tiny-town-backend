@@ -17,7 +17,6 @@ const generateQRCode = async (value, filename, options = {}) => {
         ...options,
     });
 
-    // Return relative path from qrcodes folder
     return `qrcodes/${filename}`;
 };
 

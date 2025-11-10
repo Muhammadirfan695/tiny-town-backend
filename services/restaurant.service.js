@@ -111,49 +111,6 @@ const createRestaurantService = async (data, files) => {
 };
 
 
-// const getAllRestaurantsService = async (query) => {
-//   try {
-//     const { page = 1, limit = 10, search,owner_id,manager_id } = query;
-//     const offset = (page - 1) * limit;
-
-//     const whereClause = {};
-//     if (search) {
-//       whereClause[Op.or] = [
-//         { name: { [Op.iLike]: `%${search}%` } },
-//         { address: { [Op.iLike]: `%${search}%` } },
-//         { cuisine_type: { [Op.iLike]: `%${search}%` } },
-//       ];
-//     }
-
-//     const { count, rows } = await Restaurant.findAndCountAll({
-//       where: whereClause,
-//       include: [
-//         { model: User, as: "Owner", attributes: ["id", "firstName", "lastName", "email"] },
-//         { model: User, as: "Manager", attributes: ["id", "firstName", "lastName", "email"] },
-//         { association: "attachments", attributes: ["attachment_type", "image_path"] }
-//       ],
-//       limit: parseInt(limit),
-//       offset: parseInt(offset),
-//       order: [['createdAt', 'DESC']],
-//       distinct: true
-//     });
-
-//     return success("Restaurants fetched successfully", {
-//       data: {
-//         total: count,
-//         totalPages: Math.ceil(count / limit),
-//         currentPage: parseInt(page),
-//         restaurants: rows
-//       }
-//     });
-
-//   } catch (err) {
-//     console.error("Error in getAllRestaurantsService:", err);
-//     return error("Failed to fetch restaurants", 500);
-//   }
-// };
-
-
 const getAllRestaurantsService = async (query) => {
   try {
     const {
@@ -322,16 +279,12 @@ const updateRestaurantService = async (id, data, files, userRole) => {
       return error("Restaurant not found", 404);
     }
 
-    // ✅ Convert empty or invalid UUID strings to null
     ["owner_id", "manager_id"].forEach((key) => {
       if (data[key] === "" || data[key] === "null" || data[key] === null) {
         data[key] = null;
       }
     });
-
-    console.log("data---", data);
-
-    // ✅ Restrict non-admin users from changing owner/manager
+    
     if ((data.owner_id || data.manager_id) && userRole !== "Admin") {
       await transaction.rollback();
       return error(
@@ -340,7 +293,6 @@ const updateRestaurantService = async (id, data, files, userRole) => {
       );
     }
 
-    // ✅ Validate new owner
     if (data.owner_id && userRole === "Admin") {
       const newOwner = await User.findByPk(data.owner_id);
       if (!newOwner) {
@@ -359,7 +311,6 @@ const updateRestaurantService = async (id, data, files, userRole) => {
       }
     }
 
-    // ✅ Validate new manager
     if (data.manager_id && userRole === "Admin") {
       const newManager = await User.findByPk(data.manager_id);
       if (!newManager) {
@@ -368,7 +319,6 @@ const updateRestaurantService = async (id, data, files, userRole) => {
       }
     }
 
-    // ✅ Latitude & Longitude validation
     const { latitude, longitude } = data;
     if (latitude && (isNaN(latitude) || latitude < -90 || latitude > 90)) {
       await transaction.rollback();
@@ -380,7 +330,6 @@ const updateRestaurantService = async (id, data, files, userRole) => {
       return error("Invalid longitude value", 400);
     }
 
-    // ✅ Handle tags (array or comma-separated string)
     if (data.tags) {
       if (typeof data.tags === "string") {
         data.tags = data.tags
@@ -393,7 +342,6 @@ const updateRestaurantService = async (id, data, files, userRole) => {
       }
     }
 
-    // ✅ Parse service_model JSON if string
     if (data.service_model && typeof data.service_model === "string") {
       try {
         data.service_model = JSON.parse(data.service_model);
@@ -403,7 +351,6 @@ const updateRestaurantService = async (id, data, files, userRole) => {
       }
     }
 
-    // ✅ Update restaurant
     await restaurant.update(
       {
         ...data,
@@ -414,7 +361,6 @@ const updateRestaurantService = async (id, data, files, userRole) => {
       { transaction }
     );
 
-    // ✅ Handle logo file upload
     if (files?.logo) {
       const oldLogo = await findOneAttachment(id, "Restaurant", "logo", transaction);
       if (oldLogo) await deleteAttachment(oldLogo, transaction);
@@ -428,7 +374,6 @@ const updateRestaurantService = async (id, data, files, userRole) => {
       );
     }
 
-    // ✅ Handle header image upload
     if (files?.header_image) {
       const oldHeader = await findOneAttachment(id, "Restaurant", "header_image", transaction);
       if (oldHeader) await deleteAttachment(oldHeader, transaction);
@@ -444,7 +389,6 @@ const updateRestaurantService = async (id, data, files, userRole) => {
 
     await transaction.commit();
 
-    // ✅ Fetch updated restaurant with relations
     const updatedRestaurant = await Restaurant.findByPk(id, {
       include: ["Owner", "Manager", "attachments"],
     });

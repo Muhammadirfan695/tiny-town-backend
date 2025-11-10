@@ -149,13 +149,11 @@ const getAllDishesService = async (filters = {}, pagination = {}) => {
 
   const where = {};
 
-  // 🔹 Normalize string inputs to arrays
   if (typeof menuIds === "string")
     menuIds = menuIds.split(",").map((id) => id.trim());
   if (typeof notInMenuIds === "string")
     notInMenuIds = notInMenuIds.split(",").map((id) => id.trim());
 
-  // 🔹 Base filters
   if (restaurantId) where.restaurant_id = restaurantId;
   if (excludeRestaurantId)
     where.restaurant_id = { [Op.ne]: excludeRestaurantId };
@@ -175,23 +173,21 @@ const getAllDishesService = async (filters = {}, pagination = {}) => {
   if (published !== undefined) where.published = published;
   if (quantity !== undefined) where.quantity = quantity;
 
-  // 🔹 Include base relations
   const include = [
     { model: Attachment, as: "attachments" },
     { model: Restaurant, as: "restaurant" },
   ];
 
-  // 🔹 Case 1: Filter by menu(s)
+
   if (menuIds?.length) {
     include.push({
       model: Menu,
       through: { attributes: [] },
       where: { id: { [Op.in]: menuIds } },
-      required: true, // inner join
+      required: true, 
     });
   }
 
-  // 🔹 Case 2: Exclude dishes in given menu(s)
   else if (notInMenuIds?.length) {
     const notInCondition = sequelize.literal(`
       NOT EXISTS (
@@ -209,7 +205,6 @@ const getAllDishesService = async (filters = {}, pagination = {}) => {
     });
   }
 
-  // 🔹 Case 3: Default include
   else {
     include.push({
       model: Menu,
@@ -218,7 +213,6 @@ const getAllDishesService = async (filters = {}, pagination = {}) => {
     });
   }
 
-  // 🔹 Fetch paginated results
   const { rows, count } = await Dish.findAndCountAll({
     where,
     include,
@@ -258,7 +252,7 @@ const updateDishService = async (data, files = null) => {
       validity_end,
       published,
       menuIds, restaurant_id,
-      existingAttachmentIds = [], // Array of IDs to keep
+      existingAttachmentIds = [],
     } = data;
 
     const dish = await findDishById(id, t);

@@ -69,14 +69,14 @@ Restaurant.hasMany(Attachment, {
 Restaurant.hasMany(Dish, {
   foreignKey: "restaurant_id",
   as: "dishes",
-  onDelete: "CASCADE", // delete dishes if restaurant is deleted
+  onDelete: "CASCADE", 
 });
 Restaurant.hasMany(FavouriteRestaurant, {
   foreignKey: "restaurant_id",
   as: "favouritedBy",
   onDelete: "CASCADE",
 });
-// Dish → Restaurant
+
 Dish.belongsTo(Restaurant, {
   foreignKey: "restaurant_id",
   as: "restaurant",

@@ -35,7 +35,7 @@ const findUserById = async (id, transaction = null) => {
 
 const createOtpWithExpiry = () => {
   const otp = generateOTP();
-  const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+  const expires = new Date(Date.now() + 10 * 60 * 1000); 
   return { otp, expires };
 };
 
@@ -197,65 +197,6 @@ const findAllAndCountUser = async (
 }
 
 
-// const getAllUsersService = async (query) => {
-//   const transaction = await sequelize.transaction();
-//   try {
-//     let {
-//       page = 1,
-//       limit = 10,
-//       status,
-//       verified,
-//       firstName,
-//       lastName,
-//       email,
-//       deleted
-//     } = query;
-
-//     page = parseInt(page);
-//     limit = parseInt(limit);
-//     const offset = (page - 1) * limit;
-
-//     const where = {};
-
-//     if (status) where.status = status;
-//     if (verified !== undefined)
-//       where.verified = verified === "true" || verified === true;
-//     if (firstName)
-//       where.firstName = { [Op.iLike]: `%${firstName.trim()}%` };
-//     if (lastName)
-//       where.lastName = { [Op.iLike]: `%${lastName.trim()}%` };
-//     if (email)
-//       where.email = { [Op.iLike]: `%${email.trim()}%` };
-
-
-//     let paranoid = true;
-//     if (deleted === "true" || deleted === true) {
-//       paranoid = false;
-//       where.deletedAt = { [Op.ne]: null };
-//     }
-
-//     const result = await findAllAndCountUser(where, limit, offset, paranoid, transaction)
-//     const { rows: users, count } = result
-
-//     await transaction.commit();
-
-//     return success("Users fetched successfully", {
-
-//       data: {
-//         users: users, total: count,
-//         page,
-//         limit,
-//         totalPages: Math.ceil(count / limit),
-//       },
-//     });
-//   } catch (err) {
-//     console.error("getAllUsersService error:", err);
-//     await transaction.rollback();
-//     return error("Failed to fetch users", 400);
-//   }
-// };
-
-
 const getAllUsersService = async (query) => {
   const transaction = await sequelize.transaction();
   try {
@@ -292,7 +233,6 @@ const getAllUsersService = async (query) => {
       where.deletedAt = { [Op.ne]: null };
     }
 
-    // 🔹 Get all users with roles, then filter out users who only have 'Admin'
     const usersWithRoles = await User.findAll({
       where,
       include: [
@@ -303,13 +243,18 @@ const getAllUsersService = async (query) => {
           through: { attributes: [] },
         },
       ],
+      attributes: {
+        exclude: ["password", "resetPasswordToken",
+          "resetPasswordExpire", "otp",
+          "otpExpires", "magicLoginToken", "magicLoginTokenExpires",
+          "createdAt", "updatedAt"]
+      },
       offset,
       limit,
       paranoid,
       transaction,
     });
 
-    // 🔹 Filter out users that have ONLY the Admin role
     const filteredUsers = usersWithRoles.filter(user => {
       const roleNames = user.Roles.map(r => r.name.toLowerCase());
       return !(roleNames.length === 1 && roleNames[0] === "admin");
@@ -555,13 +500,6 @@ const updateUserService = async (data, file = null) => {
     }
 
     await transaction.commit();
-
-
-    // if (user.provider === "local" && email && email !== user.email) {
-    //   // const { otp, expires } = createOtpWithExpiry();
-    //   // await generateUserVerifyOtp(user, otp, expires);
-    //   // await sendOTPtoVerify(email, otp);
-    // }
 
     const updatedUser = await findUserById(id);
     return success("User updated successfully", { data: updatedUser });

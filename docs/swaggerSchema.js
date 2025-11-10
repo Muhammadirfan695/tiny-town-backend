@@ -26,6 +26,14 @@
  *   description: API to manage countries
  */
 
+
+/**
+ * @swagger
+ * tags:
+ *   name: Dashboard
+ *   description: API to get stats on Dashboard
+ */
+
 /**
  * @swagger
  * tags:

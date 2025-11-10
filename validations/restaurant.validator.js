@@ -118,7 +118,7 @@ const createRestaurantValidationRules = () => {
       .withMessage("Manager ID must be a valid UUID."),
   ];
 };
-// 
+ 
 const validate = (req, res, next) => {
   const errors = validationResult(req);
   if (errors.isEmpty()) {
