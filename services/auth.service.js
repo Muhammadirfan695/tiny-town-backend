@@ -51,7 +51,7 @@ loginService = async (email, password) => {
 
     });
     if (!user) {
-      return error("Invalid Credentials", 401);
+      return error("Invalid Credentials", 404);
     }
 
     if (user.status !== "active") {
@@ -60,18 +60,18 @@ loginService = async (email, password) => {
 
     const match = await verifyPassword(password, user.password);
     if (!match) {
-      return error("Invalid Credentials", 401);
+      return error("Invalid Credentials", 404);
     }
-    const roleNames = await getAllUserRolesById(user.id); 
+    const roleNames = await getAllUserRolesById(user.id);
 
- 
-    const primaryRole = roleNames?.[0]; 
+
+    const primaryRole = roleNames?.[0];
 
     if (!primaryRole) {
       return error("User has no assigned role.", 500);
     }
 
-    
+
     const token = createAuthToken(user.id, primaryRole);
 
     const { password: _, ...userData } = user.toJSON();
@@ -79,7 +79,7 @@ loginService = async (email, password) => {
     return success("Login Successfully", {
       user: {
         ...userData,
-        role: primaryRole, 
+        role: primaryRole,
         token,
       },
     });
@@ -92,6 +92,14 @@ loginService = async (email, password) => {
 const loginMagicLink = async (email) => {
   if (!email) {
     return error("Email is Required", 400);
+  }
+  const sanitizedEmail = email.trim().toLowerCase();
+  const user = await User.findOne({
+    where: { email: sanitizedEmail },
+    attributes: { exclude: ["createdAt", "updatedAt"] },
+     });
+  if (!user) {
+    return error("Invalid Credentials", 404);
   }
   try {
     const token = await generateMagicToken(email);

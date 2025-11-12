@@ -2,6 +2,7 @@
 const asyncHandler = require('express-async-handler');
 const { handleResponse, error, success } = require('../helpers/response.helper');
 const { createMenuService, getAllMenusService, updateMenuService, findMenuById, deleteMenuService } = require('../services/menu.service');
+const { MenuRestaurantStats } = require('../models');
 
 const createMenu = asyncHandler(async (req, res) => {
     const {
@@ -46,7 +47,23 @@ const menuById = asyncHandler(async (req, res) => {
     if (!result) {
         return res.status(404).json(error("Menu not found", 404));
     }
+ 
+    const type = "menu";
+    const model_id = id;
 
+    const existingStat = await MenuRestaurantStats.findOne({
+      where: { model_id,  type },
+    });
+
+    if (existingStat) {
+      await existingStat.increment("detail", { by: 1 });
+    } else {
+      await MenuRestaurantStats.create({
+        model_id,
+        type,
+        detail: 1,
+      });
+    }
     return res.status(200).json(success("Menu Fetched Successfully", result, 200));
 
 });

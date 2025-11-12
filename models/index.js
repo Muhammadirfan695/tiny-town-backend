@@ -12,7 +12,7 @@ const Dish = require("./dish.model");
 const Menu = require("./menu.model");
 const MenuDish = require("./menuDish.model");
 const FavouriteRestaurant = require("./favouriteRestaurant.model");
-
+const MenuRestaurantStats = require('./menuRestaurantStats.model')
 
 User.belongsToMany(Role, {
   through: UserRole,
@@ -69,7 +69,7 @@ Restaurant.hasMany(Attachment, {
 Restaurant.hasMany(Dish, {
   foreignKey: "restaurant_id",
   as: "dishes",
-  onDelete: "CASCADE", 
+  onDelete: "CASCADE",
 });
 Restaurant.hasMany(FavouriteRestaurant, {
   foreignKey: "restaurant_id",
@@ -156,6 +156,7 @@ module.exports = {
   Dish,
   Menu,
   MenuDish,
-  FavouriteRestaurant
+  FavouriteRestaurant,
+  MenuRestaurantStats
   // ManagerRestaurant 
 };

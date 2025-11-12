@@ -1,6 +1,6 @@
 const { Op } = require("sequelize");
 const { error, success } = require("../helpers/response.helper");
-const { Menu, sequelize, Restaurant } = require("../models");
+const { Menu, sequelize, Restaurant, MenuRestaurantStats } = require("../models");
 const { createAttachment, deleteAttachment, findOneAttachment } = require("./attachment.service");
 const { findRestaurantByIdService } = require("./restaurant.service");
 const { generateMenuQRCodes } = require("./qrCode.service");
@@ -108,7 +108,7 @@ const getAllMenusService = async (query) => {
     const where = {};
 
     if (name) {
-      where.name = { [Op.iLike]: `%${name}%` }; 
+      where.name = { [Op.iLike]: `%${name}%` };
     }
 
     if (status !== undefined) {
@@ -142,7 +142,27 @@ const getAllMenusService = async (query) => {
       limit: parseInt(limit),
       offset,
     });
+    if (rows && rows.length > 0) {
+      const type = "menu";
 
+      for (const menu of rows) {
+        const model_id = menu.id;
+
+        const existingStat = await MenuRestaurantStats.findOne({
+          where: { model_id,  type },
+        });
+
+        if (existingStat) {
+          await existingStat.increment("list", { by: 1 });
+        } else {
+          await MenuRestaurantStats.create({
+            model_id,
+            type,
+            list: 1,
+          });
+        }
+      }
+    }
     return success("Menus fetched successfully", {
       total: count,
       page: parseInt(page),
@@ -188,7 +208,7 @@ const updateMenuService = async (data, files = null) => {
       { transaction }
     );
 
-   
+
     if (files?.header_image?.[0]) {
       const file = files.header_image[0];
 

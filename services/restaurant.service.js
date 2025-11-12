@@ -1,5 +1,5 @@
 const { Op } = require("sequelize");
-const { Restaurant, User, sequelize } = require("../models");
+const { Restaurant, User, sequelize, MenuRestaurantStats } = require("../models");
 const { success, error } = require("../helpers/response.helper");
 const { createAttachment, deleteAttachment, findAllAttachments, findOneAttachment } = require("./attachment.service");
 const { generateRestaurantQRCodes } = require("./qrCode.service");
@@ -229,6 +229,31 @@ const getAllRestaurantsService = async (query) => {
       count = result.count;
       restaurants = result.rows;
     }
+    if (restaurants && restaurants.length > 0) {
+      const type = "restaurant";
+
+
+      for (const restaurant of restaurants) {
+        const model_id = restaurant.id;
+
+        const existingStat = await MenuRestaurantStats.findOne({
+          where: { model_id,  type },
+        });
+
+        if (existingStat) {
+          await existingStat.increment("list", { by: 1 });
+        } else {
+          await MenuRestaurantStats.create({
+            model_id,
+            type,
+            list: 1,
+          });
+        }
+      }
+    }
+
+
+
     return success("Restaurants fetched successfully", {
       data: {
         total: count,
@@ -263,6 +288,23 @@ const findRestaurantByIdService = async (id) => {
     if (!restaurant) {
       return error("Restaurant not found", 404);
     }
+
+    const type = "restaurant";
+    const model_id = restaurant.id;
+
+    const existingStat = await MenuRestaurantStats.findOne({
+      where: { model_id, type },
+    });
+
+    if (existingStat) {
+      await existingStat.increment("detail", { by: 1 });
+    } else {
+      await MenuRestaurantStats.create({
+        model_id,
+        type,
+        detail: 1,
+      });
+    }
     return success("Restaurant fetched successfully", restaurant);
   } catch (err) {
     console.error("Error in findRestaurantByIdService:", err);
@@ -284,7 +326,7 @@ const updateRestaurantService = async (id, data, files, userRole) => {
         data[key] = null;
       }
     });
-    
+
     if ((data.owner_id || data.manager_id) && userRole !== "Admin") {
       await transaction.rollback();
       return error(
