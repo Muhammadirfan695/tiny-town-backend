@@ -18,8 +18,8 @@ const Menu = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    timingStart: { type: DataTypes.TIME, allowNull: false },
-    timingEnd: { type: DataTypes.TIME, allowNull: false },
+    timingStart: { type: DataTypes.TIME, allowNull: true },
+    timingEnd: { type: DataTypes.TIME, allowNull: true },
     status: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
