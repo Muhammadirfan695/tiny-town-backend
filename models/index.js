@@ -161,6 +161,47 @@ MenuRestaurantStats.belongsTo(Menu, {
   as: 'menu'
 });
 
+Newsletter.belongsToMany(Restaurant, {
+  through: NewsletterRestaurants,
+  foreignKey: 'newsletter_id',
+  otherKey: 'restaurant_id',
+  as: 'restaurants'
+})
+
+Restaurant.belongsToMany(Newsletter, {
+  through: NewsletterRestaurants,
+  foreignKey: 'restaurant_id',
+  otherKey: 'newsletter_id',
+  as: 'newsletters'
+});
+
+Newsletter.hasMany(NewsletterRecipient, {
+  as: 'recipients',
+  foreignKey: 'newsletter_id'
+});
+
+NewsletterRecipient.belongsTo(Newsletter, {
+  foreignKey: 'newsletter_id'
+});
+
+NewsletterRecipient.belongsTo(User, {
+  foreignKey: 'user_id'
+});
+Newsletter.hasMany(Attachment, {
+  foreignKey: "model_id",
+  constraints: false,
+  scope: { model_type: "Newsletter" },
+  as: 'attachments'
+});
+Attachment.belongsTo(Newsletter, {
+  foreignKey: "model_id",
+  constraints: false,
+  as: "newsLetterAttachment",
+  scope: { model_type: "Newsletter" },
+});
+
+
+
 module.exports = {
   sequelize,
   User,

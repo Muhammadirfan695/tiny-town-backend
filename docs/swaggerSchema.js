@@ -51,6 +51,14 @@
 /**
  * @swagger
  * tags:
+ *   name: Newsletters
+ *   description: API to manage Newsletters
+ */
+
+
+/**
+ * @swagger
+ * tags:
  *   name: Restaurant
  *   description: Restaurant management 
  */
