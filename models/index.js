@@ -15,6 +15,7 @@ const FavouriteRestaurant = require("./favouriteRestaurant.model");
 const MenuRestaurantStats = require('./menuRestaurantStats.model');
 const Newsletter = require('./newsletter.model');
 const NewsletterRecipient = require('./newsLetterRecipients.model');
+const NewsletterRestaurants = require('./newsletterRestaurant.model');
 
 User.belongsToMany(Role, {
   through: UserRole,
@@ -149,32 +150,38 @@ FavouriteRestaurant.belongsTo(Restaurant, {
 })
 
 
-Newsletter.belongsTo(Restaurant, {
-  as: 'restaurant',
-  foreignKey: 'restaurant_id'
+Newsletter.belongsToMany(Restaurant, {
+  through: NewsletterRestaurants,
+  foreignKey: 'newsletter_id',
+  otherKey: 'restaurant_id',
+  as: 'restaurants'
 })
+
+Restaurant.belongsToMany(Newsletter, {
+  through: NewsletterRestaurants,
+  foreignKey: 'restaurant_id',
+  otherKey: 'newsletter_id',
+  as: 'newsletters'
+});
 
 Newsletter.hasMany(NewsletterRecipient, {
   as: 'recipients',
   foreignKey: 'newsletter_id'
-})
+});
 
-NewsletterRecipient.belongsTo(Newsletter,
-  {
-    foreignKey: 'newsletter_id'
-  })
+NewsletterRecipient.belongsTo(Newsletter, {
+  foreignKey: 'newsletter_id'
+});
 
-NewsletterRecipient.belongsTo(User,
-  {
-    foreignKey: 'user_id'
-  }
-)
+NewsletterRecipient.belongsTo(User, {
+  foreignKey: 'user_id'
+});
 Newsletter.hasMany(Attachment, {
   foreignKey: "model_id",
   constraints: false,
   scope: { model_type: "Newsletter" },
   as: 'attachments'
-})
+});
 Attachment.belongsTo(Newsletter, {
   foreignKey: "model_id",
   constraints: false,
