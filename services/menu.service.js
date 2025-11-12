@@ -50,7 +50,14 @@ const createMenuService = async (data, files = null) => {
       await transaction.rollback();
       return error('No Restaurant Found', 404)
     }
-
+    const existingMenu = await Menu.findOne({
+      where: { restaurant_id },
+      transaction
+    });
+    if (existingMenu) {
+      await transaction.rollback();
+      return error('A restaurant can have only one menu', 400);
+    }
     const menu = await Menu.create(
       {
         name,

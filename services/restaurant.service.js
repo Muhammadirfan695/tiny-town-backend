@@ -54,7 +54,8 @@ const createRestaurantService = async (data, files) => {
         return error("Tags must be an array or comma-separated string", 400);
       }
     }
-
+    const parsedLatitude = parseFloat(latitude);
+    const parsedLongitude = parseFloat(longitude);
     const newRestaurant = await Restaurant.create(
       {
         ...restaurantData,
@@ -65,8 +66,9 @@ const createRestaurantService = async (data, files) => {
         total_weekly_hours: total_weekly_hours || null,
         website,
         postal_code,
-        latitude: latitude ? parseFloat(latitude) : null,
-        longitude: longitude ? parseFloat(longitude) : null,
+
+        latitude: !isNaN(parsedLatitude) ? parsedLatitude : null,
+        longitude: !isNaN(parsedLongitude) ? parsedLongitude : null,
         tags: tags?.length ? tags : null,
       },
       { transaction }
@@ -368,15 +370,15 @@ const updateRestaurantService = async (id, data, files, userRole) => {
     }
 
     const { latitude, longitude } = data;
-    if (latitude && (isNaN(latitude) || latitude < -90 || latitude > 90)) {
-      await transaction.rollback();
-      return error("Invalid latitude value", 400);
-    }
+    // if (latitude && (isNaN(latitude) || latitude < -90 || latitude > 90)) {
+    //   await transaction.rollback();
+    //   return error("Invalid latitude value", 400);
+    // }
 
-    if (longitude && (isNaN(longitude) || longitude < -180 || longitude > 180)) {
-      await transaction.rollback();
-      return error("Invalid longitude value", 400);
-    }
+    // if (longitude && (isNaN(longitude) || longitude < -180 || longitude > 180)) {
+    //   await transaction.rollback();
+    //   return error("Invalid longitude value", 400);
+    // }
 
     if (data.tags) {
       if (typeof data.tags === "string") {
@@ -398,12 +400,14 @@ const updateRestaurantService = async (id, data, files, userRole) => {
         return error("Invalid JSON format for service_model", 400);
       }
     }
-
+    const parsedLatitude = parseFloat(latitude);
+    const parsedLongitude = parseFloat(longitude);
     await restaurant.update(
       {
         ...data,
-        latitude: latitude ? parseFloat(latitude) : null,
-        longitude: longitude ? parseFloat(longitude) : null,
+
+        latitude: !isNaN(parsedLatitude) ? parsedLatitude : null,
+        longitude: !isNaN(parsedLongitude) ? parsedLongitude : null,
         tags: data.tags?.length ? data.tags : null,
         total_weekly_hours: data.total_weekly_hours || null,
         postal_code: data.postal_code || null,

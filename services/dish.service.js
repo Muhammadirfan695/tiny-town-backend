@@ -97,7 +97,7 @@ const findDishById = async (id, transaction = null) => {
       include: [
         {
           model: Menu,
-          as:"menus",
+          as: "menus",
           through: { attributes: [] }
         },
         {
@@ -194,7 +194,7 @@ const getAllDishesService = async (filters = {}, pagination = {}) => {
   if (menuIds?.length) {
     include.push({
       model: Menu,
-      as:"menus",
+      as: "menus",
       through: { attributes: [] },
       where: { id: { [Op.in]: menuIds } },
       required: true,
@@ -213,7 +213,7 @@ const getAllDishesService = async (filters = {}, pagination = {}) => {
 
     include.push({
       model: Menu,
-      as:"menus",
+      as: "menus",
       through: { attributes: [] },
       required: false,
     });
@@ -222,7 +222,7 @@ const getAllDishesService = async (filters = {}, pagination = {}) => {
   else {
     include.push({
       model: Menu,
-      as:"menus",
+      as: "menus",
       through: { attributes: [] },
       required: false,
     });
@@ -277,21 +277,15 @@ const updateDishService = async (data, files = null) => {
       await t.rollback();
       return error('Dish not found', 404)
     }
-    if (tags) {
-      if (typeof tags === "string") {
-        tags = tags
-          .split(",")
-          .map((t) => t.trim())
-          .filter((t) => t.length > 0);
-      } else if (!Array.isArray(tags)) {
-        await t.rollback();
-        return error("Tags must be an array or comma-separated string", 400);
-      }
-    }
+    tags = Array.isArray(tags)
+    ? tags
+    : typeof tags === "string"
+      ? tags.split(",").map(t => t.trim()).filter(t => t)
+      : [];
 
 
     await dish.update(
-      { name, description, price, quantity, validity_start, validity_end, published, restaurant_id },
+      { name, description, price, quantity, tags, validity_start, validity_end, published, restaurant_id },
       { transaction: t }
     );
 
@@ -303,7 +297,6 @@ const updateDishService = async (data, files = null) => {
 
     const currentAttachments = await findAllAttachments(dish.id, "Dish", t)
 
-    console.log("currentAttachments", currentAttachments)
     for (const attachment of currentAttachments) {
       if (!existingAttachmentIds.includes(attachment.id)) {
         await deleteAttachment(attachment, t);

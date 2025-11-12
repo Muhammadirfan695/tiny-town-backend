@@ -224,10 +224,22 @@ const getAllUsersService = async (query) => {
     if (status) where.status = status;
     if (verified !== undefined)
       where.verified = verified === "true" || verified === true;
-    if (firstName)
-      where.firstName = { [Op.iLike]: `%${firstName.trim()}%` };
-    if (lastName)
-      where.lastName = { [Op.iLike]: `%${lastName.trim()}%` };
+    // if (firstName)
+    //   where.firstName = { [Op.iLike]: `%${firstName.trim()}%` };
+    // if (lastName)
+    //   where.lastName = { [Op.iLike]: `%${lastName.trim()}%` };
+    if (firstName) {
+      const fullName = firstName.trim();
+      where[Op.or] = [
+        { firstName: { [Op.iLike]: `%${fullName}%` } },
+        { lastName: { [Op.iLike]: `%${fullName}%` } },
+        sequelize.where(
+          sequelize.fn('concat', sequelize.col('firstName'), ' ', sequelize.col('lastName')),
+          { [Op.iLike]: `%${fullName}%` }
+        ),
+      ];
+    }
+    
     if (email)
       where.email = { [Op.iLike]: `%${email.trim()}%` };
 
