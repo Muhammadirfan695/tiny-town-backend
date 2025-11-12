@@ -1,6 +1,6 @@
 const { Op } = require("sequelize");
 const { error, success } = require("../helpers/response.helper");
-const { Menu, sequelize, Restaurant, MenuRestaurantStats } = require("../models");
+const { Menu, sequelize, Restaurant, MenuRestaurantStats, Dish } = require("../models");
 const { createAttachment, deleteAttachment, findOneAttachment } = require("./attachment.service");
 const { findRestaurantByIdService } = require("./restaurant.service");
 const { generateMenuQRCodes } = require("./qrCode.service");
@@ -32,6 +32,7 @@ const findMenuById = async (id, transaction = null) => {
         as: "restaurant",
         attributes: ["id", "name", "address"],
       },
+      { model: Dish, as: "dishes", through: { attributes: [] } },
       { association: "attachments" },
     ],
     transaction,

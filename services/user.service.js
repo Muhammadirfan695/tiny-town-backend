@@ -1,5 +1,5 @@
 const { Op } = require("sequelize");
-const { User, Role, sequelize, Attachment } = require("../models");
+const { User, Role, sequelize, Attachment, Restaurant } = require("../models");
 const { generateOTP } = require("../utils");
 const { v4: uuidv4 } = require('uuid');
 const { error, success } = require("../helpers/response.helper");
@@ -18,6 +18,8 @@ const findByEmail = async (email) => {
     where: { email: sanitizedEmail },
     attributes: { exclude: ["createdAt", "updatedAt"] },
     include: [{ model: Role, as: "Roles", attributes: { exclude: ["createdAt", "updatedAt"] }, through: { attributes: [] } },
+    { model: Restaurant, as: 'OwnedRestaurants' },
+    { model: Restaurant, as: 'ManagedRestaurants' },
     { model: Attachment, as: "attachments", attributes: { exclude: ["createdAt", "updatedAt"] } }],
 
 

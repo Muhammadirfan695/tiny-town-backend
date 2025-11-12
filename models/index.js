@@ -124,12 +124,14 @@ Menu.belongsToMany(Dish, {
   through: MenuDish,
   foreignKey: "menu_id",
   otherKey: "dish_id",
+   as: "dishes"
 });
 
 Dish.belongsToMany(Menu, {
   through: MenuDish,
   foreignKey: "dish_id",
   otherKey: "menu_id",
+  as: "menus",
 });
 
 FavouriteRestaurant.belongsTo(User, {

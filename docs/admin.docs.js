@@ -698,6 +698,18 @@
  *                 format: uuid
  *                 description: "UUID of an existing user with the 'Manager' role."
  *                 example: "4c72cf2c-781a-488f-bcea-ea19171d3f9f"
+ *               website:
+ *                 type: string
+ *                 description: Website URL of the restaurant.
+ *                 example: "https://pizzapalace.com"
+ *               postal_code:
+ *                 type: string
+ *                 description: Postal/ZIP code of the restaurant.
+ *                 example: "54000"
+ *               total_weekly_hours:
+ *                 type: number
+ *                 description: Total number of operating hours per week.
+ *                 example: 56
  *               country:
  *                 type: string
  *                 example: "Pakistan"
@@ -1008,6 +1020,18 @@
  *                 format: uuid
  *                 description: New Manager ID (Admin only).
  *                 example: "4c72cf2c-781a-488f-bcea-ea19171d3f9f"
+ *               website:
+ *                 type: string
+ *                 description: Website URL of the restaurant.
+ *                 example: "https://pizzapalace.com"
+ *               postal_code:
+ *                 type: string
+ *                 description: Postal/ZIP code of the restaurant.
+ *                 example: "54000"
+ *               total_weekly_hours:
+ *                 type: number
+ *                 description: Total number of operating hours per week.
+ *                 example: 56
  *               logo:
  *                 type: string
  *                 format: binary

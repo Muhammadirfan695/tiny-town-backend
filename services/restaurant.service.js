@@ -16,6 +16,9 @@ const createRestaurantService = async (data, files) => {
       city,
       latitude,
       longitude,
+      total_weekly_hours,
+      website,
+      postal_code,
       tags, ...restaurantData } = data;
     if (owner_id) {
       const owner = await User.findByPk(owner_id);
@@ -59,6 +62,9 @@ const createRestaurantService = async (data, files) => {
         manager_id: manager_id ? manager_id : null,
         country,
         city,
+        total_weekly_hours: total_weekly_hours || null,
+        website,
+        postal_code,
         latitude: latitude ? parseFloat(latitude) : null,
         longitude: longitude ? parseFloat(longitude) : null,
         tags: tags?.length ? tags : null,
@@ -237,7 +243,7 @@ const getAllRestaurantsService = async (query) => {
         const model_id = restaurant.id;
 
         const existingStat = await MenuRestaurantStats.findOne({
-          where: { model_id,  type },
+          where: { model_id, type },
         });
 
         if (existingStat) {
@@ -399,6 +405,9 @@ const updateRestaurantService = async (id, data, files, userRole) => {
         latitude: latitude ? parseFloat(latitude) : null,
         longitude: longitude ? parseFloat(longitude) : null,
         tags: data.tags?.length ? data.tags : null,
+        total_weekly_hours: data.total_weekly_hours || null,
+        postal_code: data.postal_code || null,
+        website: data.website || null,
       },
       { transaction }
     );
