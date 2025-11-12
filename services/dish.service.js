@@ -97,6 +97,7 @@ const findDishById = async (id, transaction = null) => {
       include: [
         {
           model: Menu,
+          as:"menus",
           through: { attributes: [] }
         },
         {
@@ -193,6 +194,7 @@ const getAllDishesService = async (filters = {}, pagination = {}) => {
   if (menuIds?.length) {
     include.push({
       model: Menu,
+      as:"menus",
       through: { attributes: [] },
       where: { id: { [Op.in]: menuIds } },
       required: true,
@@ -211,6 +213,7 @@ const getAllDishesService = async (filters = {}, pagination = {}) => {
 
     include.push({
       model: Menu,
+      as:"menus",
       through: { attributes: [] },
       required: false,
     });
@@ -219,6 +222,7 @@ const getAllDishesService = async (filters = {}, pagination = {}) => {
   else {
     include.push({
       model: Menu,
+      as:"menus",
       through: { attributes: [] },
       required: false,
     });
