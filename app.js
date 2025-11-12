@@ -14,7 +14,8 @@ const userRoutes = require('./routes/user.routes.js')
 const dishRoutes = require('./routes/dish.routes.js')
 const restaurantRoutes = require('./routes/restaurant.routes.js')
 const menuRoutes = require('./routes/menu.routes.js')
-
+const dashboardRoutes = require("./routes/dashboard.routes.js")
+const newsletterRoutes = require("./routes/newsletter.routes.js");
 
 const app = express();
 
@@ -94,7 +95,9 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/dishes', dishRoutes);
 app.use('/api/restaurants', restaurantRoutes);
-app.use('/api/menus', menuRoutes)
+app.use('/api/menus', menuRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use('/api/newsletters', newsletterRoutes);
 // ========================
 // Database & Server Start
 // ========================

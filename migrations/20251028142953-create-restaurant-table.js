@@ -3,7 +3,6 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    // 'Restaurant' naam ka naya table banayein
     await queryInterface.createTable('Restaurant', {
       id: {
         type: Sequelize.UUID,

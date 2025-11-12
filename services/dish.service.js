@@ -14,7 +14,7 @@ const setDishMenusService = async (dish, menuIds, transaction) => {
 const createDishService = async (data, files = null) => {
   const t = await sequelize.transaction();
   try {
-    const {
+    let {
       name,
       description,
       price,
@@ -23,7 +23,7 @@ const createDishService = async (data, files = null) => {
       validity_end,
       published,
       menuIds,
-      restaurant_id
+      restaurant_id, tags
     } = data;
     if (menuIds && menuIds.length > 0) {
       const { valid, missingIds } = await validateMenusExistService(menuIds, t);
@@ -37,6 +37,16 @@ const createDishService = async (data, files = null) => {
       await t.rollback();
       return error('No Restaurant Found', 404)
     }
+    if (tags) {
+      if (typeof tags === "string") {
+        tags = tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter((t) => t.length > 0);
+      } else if (!Array.isArray(tags)) {
+        return error("Tags must be an array or comma-separated string", 400);
+      }
+    }
     const dish = await Dish.create({
       name,
       description,
@@ -46,6 +56,7 @@ const createDishService = async (data, files = null) => {
       validity_end,
       restaurant_id,
       published: published ?? false,
+      tags: tags?.length ? tags : null,
     }, t)
 
     if (menuIds && menuIds.length > 0) {
@@ -86,6 +97,7 @@ const findDishById = async (id, transaction = null) => {
       include: [
         {
           model: Menu,
+          as: "menus",
           through: { attributes: [] }
         },
         {
@@ -115,7 +127,7 @@ const deleteDishService = async (id) => {
     for (const attachment of attachments) {
       await deleteAttachment(attachment, t);
     }
-   
+
     await dish.destroy({ transaction: t });
 
     await t.commit();
@@ -149,13 +161,11 @@ const getAllDishesService = async (filters = {}, pagination = {}) => {
 
   const where = {};
 
-  // 🔹 Normalize string inputs to arrays
   if (typeof menuIds === "string")
     menuIds = menuIds.split(",").map((id) => id.trim());
   if (typeof notInMenuIds === "string")
     notInMenuIds = notInMenuIds.split(",").map((id) => id.trim());
 
-  // 🔹 Base filters
   if (restaurantId) where.restaurant_id = restaurantId;
   if (excludeRestaurantId)
     where.restaurant_id = { [Op.ne]: excludeRestaurantId };
@@ -175,23 +185,22 @@ const getAllDishesService = async (filters = {}, pagination = {}) => {
   if (published !== undefined) where.published = published;
   if (quantity !== undefined) where.quantity = quantity;
 
-  // 🔹 Include base relations
   const include = [
     { model: Attachment, as: "attachments" },
     { model: Restaurant, as: "restaurant" },
   ];
 
-  // 🔹 Case 1: Filter by menu(s)
+
   if (menuIds?.length) {
     include.push({
       model: Menu,
+      as: "menus",
       through: { attributes: [] },
       where: { id: { [Op.in]: menuIds } },
-      required: true, // inner join
+      required: true,
     });
   }
 
-  // 🔹 Case 2: Exclude dishes in given menu(s)
   else if (notInMenuIds?.length) {
     const notInCondition = sequelize.literal(`
       NOT EXISTS (
@@ -204,21 +213,21 @@ const getAllDishesService = async (filters = {}, pagination = {}) => {
 
     include.push({
       model: Menu,
+      as: "menus",
       through: { attributes: [] },
       required: false,
     });
   }
 
-  // 🔹 Case 3: Default include
   else {
     include.push({
       model: Menu,
+      as: "menus",
       through: { attributes: [] },
       required: false,
     });
   }
 
-  // 🔹 Fetch paginated results
   const { rows, count } = await Dish.findAndCountAll({
     where,
     include,
@@ -248,7 +257,7 @@ const getAllDishesService = async (filters = {}, pagination = {}) => {
 const updateDishService = async (data, files = null) => {
   const t = await sequelize.transaction();
   try {
-    const {
+    let {
       id,
       name,
       description,
@@ -258,7 +267,8 @@ const updateDishService = async (data, files = null) => {
       validity_end,
       published,
       menuIds, restaurant_id,
-      existingAttachmentIds = [], // Array of IDs to keep
+      existingAttachmentIds = [],
+      tags
     } = data;
 
     const dish = await findDishById(id, t);
@@ -267,10 +277,15 @@ const updateDishService = async (data, files = null) => {
       await t.rollback();
       return error('Dish not found', 404)
     }
+    tags = Array.isArray(tags)
+    ? tags
+    : typeof tags === "string"
+      ? tags.split(",").map(t => t.trim()).filter(t => t)
+      : [];
 
 
     await dish.update(
-      { name, description, price, quantity, validity_start, validity_end, published, restaurant_id },
+      { name, description, price, quantity, tags, validity_start, validity_end, published, restaurant_id },
       { transaction: t }
     );
 
@@ -282,7 +297,6 @@ const updateDishService = async (data, files = null) => {
 
     const currentAttachments = await findAllAttachments(dish.id, "Dish", t)
 
-    console.log("currentAttachments", currentAttachments)
     for (const attachment of currentAttachments) {
       if (!existingAttachmentIds.includes(attachment.id)) {
         await deleteAttachment(attachment, t);

@@ -67,24 +67,24 @@ const createRestaurantValidationRules = () => {
       .withMessage("City must be a string."),
 
     body("latitude")
-      .optional()
-      .custom((value) => {
-        const num = parseFloat(value);
-        if (isNaN(num) || num < -90 || num > 90) {
-          throw new Error("Latitude must be a number between -90 and 90.");
-        }
-        return true;
-      }),
+      .optional(),
+      // .custom((value) => {
+      //   const num = parseFloat(value);
+      //   if (isNaN(num) || num < -90 || num > 90) {
+      //     throw new Error("Latitude must be a number between -90 and 90.");
+      //   }
+      //   return true;
+      // }),
 
     body("longitude")
-      .optional()
-      .custom((value) => {
-        const num = parseFloat(value);
-        if (isNaN(num) || num < -180 || num > 180) {
-          throw new Error("Longitude must be a number between -180 and 180.");
-        }
-        return true;
-      }),
+      .optional(),
+      // .custom((value) => {
+      //   const num = parseFloat(value);
+      //   if (isNaN(num) || num < -180 || num > 180) {
+      //     throw new Error("Longitude must be a number between -180 and 180.");
+      //   }
+      //   return true;
+      // }),
 
     body("tags")
       .optional()
@@ -118,7 +118,7 @@ const createRestaurantValidationRules = () => {
       .withMessage("Manager ID must be a valid UUID."),
   ];
 };
-// 
+ 
 const validate = (req, res, next) => {
   const errors = validationResult(req);
   if (errors.isEmpty()) {

@@ -26,6 +26,14 @@
  *   description: API to manage countries
  */
 
+
+/**
+ * @swagger
+ * tags:
+ *   name: Dashboard
+ *   description: API to get stats on Dashboard
+ */
+
 /**
  * @swagger
  * tags:
@@ -39,6 +47,14 @@
  *   name: Menu
  *   description: API to manage menus
  */
+
+/**
+ * @swagger
+ * tags:
+ *   name: Newsletters
+ *   description: API to manage Newsletters
+ */
+
 
 /**
  * @swagger

@@ -698,6 +698,18 @@
  *                 format: uuid
  *                 description: "UUID of an existing user with the 'Manager' role."
  *                 example: "4c72cf2c-781a-488f-bcea-ea19171d3f9f"
+ *               website:
+ *                 type: string
+ *                 description: Website URL of the restaurant.
+ *                 example: "https://pizzapalace.com"
+ *               postal_code:
+ *                 type: string
+ *                 description: Postal/ZIP code of the restaurant.
+ *                 example: "54000"
+ *               total_weekly_hours:
+ *                 type: number
+ *                 description: Total number of operating hours per week.
+ *                 example: 56
  *               country:
  *                 type: string
  *                 example: "Pakistan"
@@ -1008,6 +1020,18 @@
  *                 format: uuid
  *                 description: New Manager ID (Admin only).
  *                 example: "4c72cf2c-781a-488f-bcea-ea19171d3f9f"
+ *               website:
+ *                 type: string
+ *                 description: Website URL of the restaurant.
+ *                 example: "https://pizzapalace.com"
+ *               postal_code:
+ *                 type: string
+ *                 description: Postal/ZIP code of the restaurant.
+ *                 example: "54000"
+ *               total_weekly_hours:
+ *                 type: number
+ *                 description: Total number of operating hours per week.
+ *                 example: 56
  *               logo:
  *                 type: string
  *                 format: binary
@@ -1528,6 +1552,10 @@
  *               restaurant_id:
  *                 type: string
  *                 example: "9b8d9f32-1c4b-45a7-9dbf-fc9a8b8c7a8e"
+ *               tags:
+ *                 type: string
+ *                 description: Comma-separated string or array of tags.
+ *                 example: "family,fast-food,casual"
  *               attachments:
  *                 type: array
  *                 items:
@@ -1851,6 +1879,10 @@
  *                   type: string
  *                   format: uuid
  *                 example: ["9d2fa82b-8a71-4bfa-bd14-f7b5c299d124", "0b3f22a2-bc94-4d77-935b-1e5c11bfb25f"]
+ *               tags:
+ *                 type: string
+ *                 description: Comma-separated string or array of tags.
+ *                 example: "family,fast-food,casual"
  *               existingAttachmentIds:
  *                 type: array
  *                 description: IDs of existing attachments to keep (others will be deleted)
@@ -2220,3 +2252,92 @@
  *                   example: "Failed to assign dishes to menu"
  */
 
+
+
+
+/**
+ * @swagger
+ * /api/admin/dashboard/stats:
+ *   get:
+ *     summary: Get dashboard statistics based on user role
+ *     description: |
+ *       Returns aggregated statistics depending on the user's role.
+ *       - **Admin**: Total counts of Users, Managers, Owners, Restaurants, Menus, and Dishes.
+ *       - **Manager**: Total Restaurants, Menus, and Dishes managed by the manager.
+ *       - **Owner**: Total Restaurants, Menus, and Dishes owned by the owner.
+ *     tags:
+ *       - Dashboard
+ *     security:
+ *       - bearerAuth: [] 
+ *       - AdminApiKeyAuth: []    
+ *     responses:
+ *       200:
+ *         description: Dashboard statistics fetched successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                   example: 200
+ *                 succeeded:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Dashboard statistics fetched successfully.
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     totalUsers:
+ *                       type: integer
+ *                       example: 100
+ *                     totalManagers:
+ *                       type: integer
+ *                       example: 10
+ *                     totalOwners:
+ *                       type: integer
+ *                       example: 20
+ *                     totalRestaurants:
+ *                       type: integer
+ *                       example: 50
+ *                     totalMenus:
+ *                       type: integer
+ *                       example: 150
+ *                     totalDishes:
+ *                       type: integer
+ *                       example: 600
+ *       403:
+ *         description: Access denied or invalid role.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                   example: 403
+ *                 succeeded:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Access Denied or Invalid Role.
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                   example: 500
+ *                 succeeded:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Failed to fetch dashboard statistics.
+ */

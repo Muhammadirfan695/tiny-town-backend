@@ -12,7 +12,10 @@ const Dish = require("./dish.model");
 const Menu = require("./menu.model");
 const MenuDish = require("./menuDish.model");
 const FavouriteRestaurant = require("./favouriteRestaurant.model");
-
+const MenuRestaurantStats = require('./menuRestaurantStats.model');
+const Newsletter = require('./newsletter.model');
+const NewsletterRecipient = require('./newsLetterRecipients.model');
+const NewsletterRestaurants = require('./newsletterRestaurant.model');
 
 User.belongsToMany(Role, {
   through: UserRole,
@@ -69,14 +72,14 @@ Restaurant.hasMany(Attachment, {
 Restaurant.hasMany(Dish, {
   foreignKey: "restaurant_id",
   as: "dishes",
-  onDelete: "CASCADE", // delete dishes if restaurant is deleted
+  onDelete: "CASCADE",
 });
 Restaurant.hasMany(FavouriteRestaurant, {
   foreignKey: "restaurant_id",
   as: "favouritedBy",
   onDelete: "CASCADE",
 });
-// Dish → Restaurant
+
 Dish.belongsTo(Restaurant, {
   foreignKey: "restaurant_id",
   as: "restaurant",
@@ -124,12 +127,14 @@ Menu.belongsToMany(Dish, {
   through: MenuDish,
   foreignKey: "menu_id",
   otherKey: "dish_id",
+  as: "dishes"
 });
 
 Dish.belongsToMany(Menu, {
   through: MenuDish,
   foreignKey: "dish_id",
   otherKey: "menu_id",
+  as: "menus",
 });
 
 FavouriteRestaurant.belongsTo(User, {
@@ -144,6 +149,59 @@ FavouriteRestaurant.belongsTo(Restaurant, {
   onDelete: "CASCADE",
 })
 
+MenuRestaurantStats.belongsTo(Restaurant, {
+  foreignKey: 'model_id',
+  constraints: false,
+  as: 'restaurant'
+});
+
+MenuRestaurantStats.belongsTo(Menu, {
+  foreignKey: 'model_id',
+  constraints: false,
+  as: 'menu'
+});
+
+Newsletter.belongsToMany(Restaurant, {
+  through: NewsletterRestaurants,
+  foreignKey: 'newsletter_id',
+  otherKey: 'restaurant_id',
+  as: 'restaurants'
+})
+
+Restaurant.belongsToMany(Newsletter, {
+  through: NewsletterRestaurants,
+  foreignKey: 'restaurant_id',
+  otherKey: 'newsletter_id',
+  as: 'newsletters'
+});
+
+Newsletter.hasMany(NewsletterRecipient, {
+  as: 'recipients',
+  foreignKey: 'newsletter_id'
+});
+
+NewsletterRecipient.belongsTo(Newsletter, {
+  foreignKey: 'newsletter_id'
+});
+
+NewsletterRecipient.belongsTo(User, {
+  foreignKey: 'user_id'
+});
+Newsletter.hasMany(Attachment, {
+  foreignKey: "model_id",
+  constraints: false,
+  scope: { model_type: "Newsletter" },
+  as: 'attachments'
+});
+Attachment.belongsTo(Newsletter, {
+  foreignKey: "model_id",
+  constraints: false,
+  as: "newsLetterAttachment",
+  scope: { model_type: "Newsletter" },
+});
+
+
+
 module.exports = {
   sequelize,
   User,
@@ -156,6 +214,9 @@ module.exports = {
   Dish,
   Menu,
   MenuDish,
-  FavouriteRestaurant
+  FavouriteRestaurant,
+  MenuRestaurantStats,
+  Newsletter,
+  NewsletterRecipient
   // ManagerRestaurant 
 };

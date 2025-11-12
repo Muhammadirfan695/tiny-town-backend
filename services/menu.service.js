@@ -1,6 +1,6 @@
 const { Op } = require("sequelize");
 const { error, success } = require("../helpers/response.helper");
-const { Menu, sequelize, Restaurant } = require("../models");
+const { Menu, sequelize, Restaurant, MenuRestaurantStats, Dish } = require("../models");
 const { createAttachment, deleteAttachment, findOneAttachment } = require("./attachment.service");
 const { findRestaurantByIdService } = require("./restaurant.service");
 const { generateMenuQRCodes } = require("./qrCode.service");
@@ -32,6 +32,7 @@ const findMenuById = async (id, transaction = null) => {
         as: "restaurant",
         attributes: ["id", "name", "address"],
       },
+      { model: Dish, as: "dishes", through: { attributes: [] } },
       { association: "attachments" },
     ],
     transaction,
@@ -44,14 +45,19 @@ const createMenuService = async (data, files = null) => {
   try {
     const { restaurant_id, name, description, timingStart, timingEnd, status } = data
 
-    // ✅ Validate restaurant exists
     const restaurant = await findRestaurantByIdService(restaurant_id)
     if (!restaurant) {
       await transaction.rollback();
       return error('No Restaurant Found', 404)
     }
-
-    // ✅ Create menu
+    const existingMenu = await Menu.findOne({
+      where: { restaurant_id },
+      transaction
+    });
+    if (existingMenu) {
+      await transaction.rollback();
+      return error('A restaurant can have only one menu', 400);
+    }
     const menu = await Menu.create(
       {
         name,
@@ -109,9 +115,8 @@ const getAllMenusService = async (query) => {
 
     const where = {};
 
-    // 🔍 Filters
     if (name) {
-      where.name = { [Op.iLike]: `%${name}%` }; // case-insensitive search
+      where.name = { [Op.iLike]: `%${name}%` };
     }
 
     if (status !== undefined) {
@@ -145,7 +150,27 @@ const getAllMenusService = async (query) => {
       limit: parseInt(limit),
       offset,
     });
+    if (rows && rows.length > 0) {
+      const type = "menu";
 
+      for (const menu of rows) {
+        const model_id = menu.id;
+
+        const existingStat = await MenuRestaurantStats.findOne({
+          where: { model_id,  type },
+        });
+
+        if (existingStat) {
+          await existingStat.increment("list", { by: 1 });
+        } else {
+          await MenuRestaurantStats.create({
+            model_id,
+            type,
+            list: 1,
+          });
+        }
+      }
+    }
     return success("Menus fetched successfully", {
       total: count,
       page: parseInt(page),
@@ -163,7 +188,6 @@ const updateMenuService = async (data, files = null) => {
   const transaction = await sequelize.transaction();
 
   try {
-    // 🔹 1. Find existing menu
     const menu = await findMenuById(data.id, transaction)
 
 
@@ -172,7 +196,6 @@ const updateMenuService = async (data, files = null) => {
       return error("Menu not found", 404);
     }
 
-    // 🔹 2. Validate restaurant if provided
     if (data.restaurant_id) {
       const restaurant = await findRestaurantByIdService(data.restaurant_id);
       if (!restaurant) {
@@ -181,7 +204,6 @@ const updateMenuService = async (data, files = null) => {
       }
     }
 
-    // 🔹 3. Update menu fields
     await menu.update(
       {
         name: data.name ?? menu.name,
@@ -194,11 +216,10 @@ const updateMenuService = async (data, files = null) => {
       { transaction }
     );
 
-    // 🔹 4. Handle header image (if provided)
+
     if (files?.header_image?.[0]) {
       const file = files.header_image[0];
 
-      // 🔸 Find existing attachment for header image
       const existingAttachment = await findOneAttachment(
         menu.id,
         "Menu",
@@ -206,12 +227,10 @@ const updateMenuService = async (data, files = null) => {
         transaction
       );
 
-      // 🔸 If exists, delete from both DB and filesystem
       if (existingAttachment) {
         await deleteAttachment(existingAttachment, transaction);
       }
 
-      // 🔸 Create new attachment record
       await createAttachment(
         menu.id,
         "Menu",
@@ -235,14 +254,12 @@ const deleteMenuService = async (id) => {
   const transaction = await sequelize.transaction();
 
   try {
-    // ✅ Find menu by ID
     const menu = await findMenuById(id, transaction);
     if (!menu) {
       await transaction.rollback();
       return error("Menu not found", 404);
     }
 
-    // ✅ Delete header image (if any)
     const existingAttachment = await findOneAttachment(
       menu.id,
       "Menu",
@@ -264,7 +281,6 @@ const deleteMenuService = async (id) => {
         console.warn(`⚠️ QR code not found: ${absolutePath}`);
       }
     }
-    // ✅ Delete menu itself
     await menu.destroy({ transaction });
 
     await transaction.commit();
