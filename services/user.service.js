@@ -30,6 +30,8 @@ const findUserById = async (id, transaction = null) => {
   return await User.findByPk(id, {
     attributes: { exclude: ["createdAt", "updatedAt"] },
     include: [{ model: Role, as: "Roles", attributes: { exclude: ["createdAt", "updatedAt"] }, through: { attributes: [] } },
+    { model: Restaurant, as: 'OwnedRestaurants' },
+    { model: Restaurant, as: 'ManagedRestaurants' },
     { model: Attachment, as: "attachments", attributes: { exclude: ["createdAt", "updatedAt"] } }],
     transaction,
   });
