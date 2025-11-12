@@ -14,7 +14,7 @@ const setDishMenusService = async (dish, menuIds, transaction) => {
 const createDishService = async (data, files = null) => {
   const t = await sequelize.transaction();
   try {
-    const {
+    let {
       name,
       description,
       price,
@@ -23,7 +23,7 @@ const createDishService = async (data, files = null) => {
       validity_end,
       published,
       menuIds,
-      restaurant_id
+      restaurant_id, tags
     } = data;
     if (menuIds && menuIds.length > 0) {
       const { valid, missingIds } = await validateMenusExistService(menuIds, t);
@@ -37,6 +37,16 @@ const createDishService = async (data, files = null) => {
       await t.rollback();
       return error('No Restaurant Found', 404)
     }
+    if (tags) {
+      if (typeof tags === "string") {
+        tags = tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter((t) => t.length > 0);
+      } else if (!Array.isArray(tags)) {
+        return error("Tags must be an array or comma-separated string", 400);
+      }
+    }
     const dish = await Dish.create({
       name,
       description,
@@ -46,6 +56,7 @@ const createDishService = async (data, files = null) => {
       validity_end,
       restaurant_id,
       published: published ?? false,
+      tags: tags?.length ? tags : null,
     }, t)
 
     if (menuIds && menuIds.length > 0) {
@@ -115,7 +126,7 @@ const deleteDishService = async (id) => {
     for (const attachment of attachments) {
       await deleteAttachment(attachment, t);
     }
-   
+
     await dish.destroy({ transaction: t });
 
     await t.commit();
@@ -184,7 +195,7 @@ const getAllDishesService = async (filters = {}, pagination = {}) => {
       model: Menu,
       through: { attributes: [] },
       where: { id: { [Op.in]: menuIds } },
-      required: true, 
+      required: true,
     });
   }
 
@@ -242,7 +253,7 @@ const getAllDishesService = async (filters = {}, pagination = {}) => {
 const updateDishService = async (data, files = null) => {
   const t = await sequelize.transaction();
   try {
-    const {
+    let {
       id,
       name,
       description,
@@ -253,6 +264,7 @@ const updateDishService = async (data, files = null) => {
       published,
       menuIds, restaurant_id,
       existingAttachmentIds = [],
+      tags
     } = data;
 
     const dish = await findDishById(id, t);
@@ -260,6 +272,17 @@ const updateDishService = async (data, files = null) => {
     if (!dish) {
       await t.rollback();
       return error('Dish not found', 404)
+    }
+    if (tags) {
+      if (typeof tags === "string") {
+        tags = tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter((t) => t.length > 0);
+      } else if (!Array.isArray(tags)) {
+        await t.rollback();
+        return error("Tags must be an array or comma-separated string", 400);
+      }
     }
 
 

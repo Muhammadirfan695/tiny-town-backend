@@ -18,7 +18,7 @@ const createDish = asyncHandler(async (req, res) => {
         validity_end,
         published,
         menuIds,
-        restaurant_id
+        restaurant_id,tags
     } = req.body;
     const result = await createDishService({
         name,
@@ -29,7 +29,8 @@ const createDish = asyncHandler(async (req, res) => {
         validity_end,
         published,
         menuIds,
-        restaurant_id
+        restaurant_id,
+        tags
     }, req.files);
     handleResponse(res, result);
 
@@ -107,6 +108,7 @@ const updateDish = asyncHandler(async (req, res) => {
         published,
         menuIds,
         existingAttachmentIds = [],
+        tags
     } = req.body;
 
     const result = await updateDishService({
@@ -119,7 +121,8 @@ const updateDish = asyncHandler(async (req, res) => {
         validity_end,
         published,
         menuIds,
-        existingAttachmentIds
+        existingAttachmentIds,
+        tags
     }, req.files);
     handleResponse(res, result)
 });
