@@ -146,6 +146,18 @@ FavouriteRestaurant.belongsTo(Restaurant, {
   onDelete: "CASCADE",
 })
 
+MenuRestaurantStats.belongsTo(Restaurant, {
+  foreignKey: 'model_id',
+  constraints: false,
+  as: 'restaurant'
+});
+
+MenuRestaurantStats.belongsTo(Menu, {
+  foreignKey: 'model_id',
+  constraints: false,
+  as: 'menu'
+});
+
 module.exports = {
   sequelize,
   User,
