@@ -1552,6 +1552,10 @@
  *               restaurant_id:
  *                 type: string
  *                 example: "9b8d9f32-1c4b-45a7-9dbf-fc9a8b8c7a8e"
+ *               tags:
+ *                 type: string
+ *                 description: Comma-separated string or array of tags.
+ *                 example: "family,fast-food,casual"
  *               attachments:
  *                 type: array
  *                 items:
@@ -1875,6 +1879,10 @@
  *                   type: string
  *                   format: uuid
  *                 example: ["9d2fa82b-8a71-4bfa-bd14-f7b5c299d124", "0b3f22a2-bc94-4d77-935b-1e5c11bfb25f"]
+ *               tags:
+ *                 type: string
+ *                 description: Comma-separated string or array of tags.
+ *                 example: "family,fast-food,casual"
  *               existingAttachmentIds:
  *                 type: array
  *                 description: IDs of existing attachments to keep (others will be deleted)

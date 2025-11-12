@@ -45,6 +45,10 @@ const Dish = sequelize.define(
         },
         onDelete: "CASCADE",
       },
+      tags: {
+          type: DataTypes.ARRAY(DataTypes.STRING),
+          allowNull: true,
+      },
     },
     {
       timestamps: true,
