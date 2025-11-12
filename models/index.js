@@ -11,6 +11,7 @@ const ManagerRestaurant = require("./managerRestaurant.model");
 const Dish = require("./dish.model");
 const Menu = require("./menu.model");
 const MenuDish = require("./menuDish.model");
+const FavouriteRestaurant = require("./favouriteRestaurant.model");
 
 
 User.belongsToMany(Role, {
@@ -21,6 +22,12 @@ User.belongsToMany(Role, {
   onUpdate: "CASCADE",
   as: "Roles",
 });
+
+User.hasMany(FavouriteRestaurant, {
+  foreignKey: "user_id",
+  as: "favouriteRestaurants",
+  onDelete: "CASCADE",
+})
 
 Role.belongsToMany(User, {
   through: UserRole,
@@ -64,7 +71,11 @@ Restaurant.hasMany(Dish, {
   as: "dishes",
   onDelete: "CASCADE", // delete dishes if restaurant is deleted
 });
-
+Restaurant.hasMany(FavouriteRestaurant, {
+  foreignKey: "restaurant_id",
+  as: "favouritedBy",
+  onDelete: "CASCADE",
+});
 // Dish → Restaurant
 Dish.belongsTo(Restaurant, {
   foreignKey: "restaurant_id",
@@ -121,6 +132,18 @@ Dish.belongsToMany(Menu, {
   otherKey: "menu_id",
 });
 
+FavouriteRestaurant.belongsTo(User, {
+  foreignKey: "user_id",
+  as: "user",
+  onDelete: "CASCADE",
+})
+
+FavouriteRestaurant.belongsTo(Restaurant, {
+  foreignKey: "restaurant_id",
+  as: "restaurant",
+  onDelete: "CASCADE",
+})
+
 module.exports = {
   sequelize,
   User,
@@ -132,6 +155,7 @@ module.exports = {
   Restaurant,
   Dish,
   Menu,
-  MenuDish
+  MenuDish,
+  FavouriteRestaurant
   // ManagerRestaurant 
 };

@@ -1,7 +1,7 @@
 
 const asyncHandler = require('express-async-handler');
 const { handleResponse, error, success } = require('../helpers/response.helper');
-const { createUserService } = require('../services/auth.service');
+const { createUserService, approveOrRejectSignupRequestService } = require('../services/auth.service');
 const { findUserById, updateUserService, getAllUsersService, deleteUserService, restoreUserService } = require('../services/user.service');
 
 
@@ -96,11 +96,17 @@ const restoreUser = asyncHandler(async (req, res) => {
     }
 });
 
+const signupApprovalRejection = asyncHandler(async (req, res) => {
+    const result = await approveOrRejectSignupRequestService(req.body);
+    handleResponse(res, result);
+  });
+
 module.exports = {
     createUser,
     UpdateUser,
     getUserById,
     getAllUsers,
     deleteUser,
-    restoreUser
+    restoreUser,
+    signupApprovalRejection
 }

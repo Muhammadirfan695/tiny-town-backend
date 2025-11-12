@@ -191,3 +191,86 @@
  */
 
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Restaurant:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *           example: "a9e0b238-91e2-4ac4-8231-2a7b3b4dc8e7"
+ *         name:
+ *           type: string
+ *           example: "Pizza Palace"
+ *         description:
+ *           type: string
+ *           example: "The best pizza in town, made with fresh ingredients."
+ *         address:
+ *           type: string
+ *           example: "123 Food Street, Downtown"
+ *         country:
+ *           type: string
+ *           example: "Pakistan"
+ *         city:
+ *           type: string
+ *           example: "Lahore"
+ *         latitude:
+ *           type: number
+ *           format: float
+ *           example: 31.582045
+ *         longitude:
+ *           type: number
+ *           format: float
+ *           example: 74.329376
+ *         phone_number:
+ *           type: string
+ *           example: "0300-1234567"
+ *         opening_hours:
+ *           type: string
+ *           example: "11:00 AM"
+ *         closing_hours:
+ *           type: string
+ *           example: "12:00 AM"
+ *         contact_email:
+ *           type: string
+ *           format: email
+ *           example: "contact@pizzapalace.com"
+ *         cuisine_type:
+ *           type: string
+ *           example: "Italian"
+ *         service_model:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: ["dine-in", "takeaway", "delivery"]
+ *         tags:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: ["family", "budget", "fast-food"]
+ *         owner_id:
+ *           type: string
+ *           format: uuid
+ *           example: "5341beb8-685b-4872-99df-c89eee5b1db0"
+ *         manager_id:
+ *           type: string
+ *           format: uuid
+ *           example: "4c72cf2c-781a-488f-bcea-ea19171d3f9f"
+ *         qr_normal:
+ *           type: string
+ *           example: "/uploads/qrcodes/normal-abc123.png"
+ *         qr_light:
+ *           type: string
+ *           example: "/uploads/qrcodes/light-abc123.png"
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           example: "2025-11-06T10:00:00.000Z"
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           example: "2025-11-06T10:00:00.000Z"
+ */

@@ -1,6 +1,6 @@
 const express = require("express");
 const { apiKeyAuth, authorize } = require("../middleware/authMiddleware");
-const { createUser, getUserById, UpdateUser, getAllUsers, deleteUser, restoreUser } = require("../controllers/admin.controller");
+const { createUser, getUserById, UpdateUser, getAllUsers, deleteUser, restoreUser, signupApprovalRejection } = require("../controllers/admin.controller");
 const { upload } = require("../utils/uploadImage");
 const restaurantRoutes = require('./restaurant.routes');
 const menuRoutes = require('./menu.routes')
@@ -17,6 +17,7 @@ router.get('/user/:id', apiKeyAuth, authorize("Admin"), getUserById);
 router.delete('/user/:id', apiKeyAuth, authorize("Admin"), deleteUser);
 router.post('/user/:id', apiKeyAuth, authorize("Admin"), restoreUser);
 
+router.post('/accept-reject', apiKeyAuth, authorize("Admin"), signupApprovalRejection);
 router.use('/', restaurantRoutes);
 router.use('/', menuRoutes)
 router.use('/', dishRoutes)

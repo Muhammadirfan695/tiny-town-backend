@@ -130,6 +130,94 @@
  *                   example: "Failed to generate authentication token"
  */
 
+
+/**
+ * @swagger
+ * /api/auth/signup:
+ *   post:
+ *     summary: Create a new user with a specific role
+ *     description: |
+ *       Registers a new user by providing first name, last name, email, password, and role.
+ *       - The password is automatically hashed.
+ *       - The role must exist (e.g., "User", "Manager", "Owner").
+ *     tags:
+ *       - Auth
+ *     security:
+ *       - ApiKeyAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - firstName
+ *               - lastName
+ *               - email
+ *               - password
+ *               - role
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *                 example: "Ali"
+ *               lastName:
+ *                 type: string
+ *                 example: "Khan"
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: "ali.khan@example.com"
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: "Password123!"
+ *               role:
+ *                 type: string
+ *                 enum: [User, Manager, Owner]
+ *                 example: "User"
+ *     responses:
+ *       201:
+ *         description: User created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 message:
+ *                   type: string
+ *                   example: User created successfully
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                           format: uuid
+ *                           example: "c9a3f1c4-5b32-4b74-8c2b-d42adfc12345"
+ *                         firstName:
+ *                           type: string
+ *                           example: "Ali"
+ *                         lastName:
+ *                           type: string
+ *                           example: "Khan"
+ *                         email:
+ *                           type: string
+ *                           example: "ali.khan@example.com"
+ *                         role:
+ *                           type: string
+ *                           example: "User"
+ *       400:
+ *         description: Missing or invalid input / user already exists / invalid role
+ *       500:
+ *         description: Internal server error
+ */
+
+
 /**
  * @swagger
  * /api/auth/magic-link:
