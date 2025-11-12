@@ -149,45 +149,18 @@ FavouriteRestaurant.belongsTo(Restaurant, {
   onDelete: "CASCADE",
 })
 
-
-Newsletter.belongsToMany(Restaurant, {
-  through: NewsletterRestaurants,
-  foreignKey: 'newsletter_id',
-  otherKey: 'restaurant_id',
-  as: 'restaurants'
-})
-
-Restaurant.belongsToMany(Newsletter, {
-  through: NewsletterRestaurants,
-  foreignKey: 'restaurant_id',
-  otherKey: 'newsletter_id',
-  as: 'newsletters'
-});
-
-Newsletter.hasMany(NewsletterRecipient, {
-  as: 'recipients',
-  foreignKey: 'newsletter_id'
-});
-
-NewsletterRecipient.belongsTo(Newsletter, {
-  foreignKey: 'newsletter_id'
-});
-
-NewsletterRecipient.belongsTo(User, {
-  foreignKey: 'user_id'
-});
-Newsletter.hasMany(Attachment, {
-  foreignKey: "model_id",
+MenuRestaurantStats.belongsTo(Restaurant, {
+  foreignKey: 'model_id',
   constraints: false,
-  scope: { model_type: "Newsletter" },
-  as: 'attachments'
+  as: 'restaurant'
 });
-Attachment.belongsTo(Newsletter, {
-  foreignKey: "model_id",
+
+MenuRestaurantStats.belongsTo(Menu, {
+  foreignKey: 'model_id',
   constraints: false,
-  as: "newsLetterAttachment",
-  scope: { model_type: "Newsletter" },
+  as: 'menu'
 });
+
 module.exports = {
   sequelize,
   User,
