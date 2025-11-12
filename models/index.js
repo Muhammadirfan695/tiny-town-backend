@@ -12,7 +12,9 @@ const Dish = require("./dish.model");
 const Menu = require("./menu.model");
 const MenuDish = require("./menuDish.model");
 const FavouriteRestaurant = require("./favouriteRestaurant.model");
-const MenuRestaurantStats = require('./menuRestaurantStats.model')
+const MenuRestaurantStats = require('./menuRestaurantStats.model');
+const Newsletter = require('./newsletter.model');
+const NewsletterRecipient = require('./newsLetterRecipients.model');
 
 User.belongsToMany(Role, {
   through: UserRole,
@@ -124,7 +126,7 @@ Menu.belongsToMany(Dish, {
   through: MenuDish,
   foreignKey: "menu_id",
   otherKey: "dish_id",
-   as: "dishes"
+  as: "dishes"
 });
 
 Dish.belongsToMany(Menu, {
@@ -146,6 +148,39 @@ FavouriteRestaurant.belongsTo(Restaurant, {
   onDelete: "CASCADE",
 })
 
+
+Newsletter.belongsTo(Restaurant, {
+  as: 'restaurant',
+  foreignKey: 'restaurant_id'
+})
+
+Newsletter.hasMany(NewsletterRecipient, {
+  as: 'recipients',
+  foreignKey: 'newsletter_id'
+})
+
+NewsletterRecipient.belongsTo(Newsletter,
+  {
+    foreignKey: 'newsletter_id'
+  })
+
+NewsletterRecipient.belongsTo(User,
+  {
+    foreignKey: 'user_id'
+  }
+)
+Newsletter.hasMany(Attachment, {
+  foreignKey: "model_id",
+  constraints: false,
+  scope: { model_type: "Newsletter" },
+  as: 'attachments'
+})
+Attachment.belongsTo(Newsletter, {
+  foreignKey: "model_id",
+  constraints: false,
+  as: "newsLetterAttachment",
+  scope: { model_type: "Newsletter" },
+});
 module.exports = {
   sequelize,
   User,
@@ -159,6 +194,8 @@ module.exports = {
   Menu,
   MenuDish,
   FavouriteRestaurant,
-  MenuRestaurantStats
+  MenuRestaurantStats,
+  Newsletter,
+  NewsletterRecipient
   // ManagerRestaurant 
 };

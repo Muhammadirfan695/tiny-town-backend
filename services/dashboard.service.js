@@ -87,7 +87,6 @@ const statsForAdmin = async () => {
     raw: true,
   });
 
-  console.log(months, "---months---", monthlyStats)
   const monthlyMap = {};
   monthlyStats.forEach(item => {
     const { month, type, totalList, totalDetail } = item;
