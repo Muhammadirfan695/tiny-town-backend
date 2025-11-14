@@ -14,6 +14,10 @@ const findNewsletterById = async (id, transaction = null) => {
                 model: Attachment,
                 as: "attachments",
             },
+            {
+                model: NewsletterRecipient,
+                as: "recipients",
+            },
         ], transaction,
     });
 };
@@ -57,24 +61,10 @@ const createNewsletterService = async (data, files = []) => {
                 };
             });
 
-            recipients = await NewsletterRecipient.bulkCreate(recipientsData, { transaction });
+            await NewsletterRecipient.bulkCreate(recipientsData, { transaction });
         }
 
-        let newsletterAttachments = [];
-        if (files.length > 0) {
-            for (const file of files) {
-                await createAttachment(
-                    newsletter.id,
-                    "Newsletter",
-                    "newsPromo",
-                    file.path,
-                    file.filename,
-                    transaction
-                );
-            }
 
-            newsletterAttachments = await findAllAttachments(newsletter.id, "Newsletter", transaction);
-        }
 
         await transaction.commit();
 
@@ -256,7 +246,7 @@ const changeNewsletterStatusService = async (newsletterId, newStatus) => {
                         {
                             model: Menu,
                             as: "menus",
-                            attributes: ["id", "title"],
+                            attributes: ["id", "name"],
                             include: [
                                 {
                                     model: Dish,
@@ -303,7 +293,10 @@ const changeNewsletterStatusService = async (newsletterId, newStatus) => {
         return success("Newsletter status updated successfully", newsletter, 200);
 
     } catch (err) {
-        await transaction.rollback();
+        if (!transaction.finished) {
+            await transaction.rollback();
+        }
+
         return error(err, 500);
     }
 };
@@ -340,6 +333,10 @@ const getAllNewslettersService = async (query) => {
                     model: Attachment,
                     as: "attachments",
                 },
+                {
+                    model: NewsletterRecipient,
+                    as: "recipients",
+                },
             ],
             order: [[sortBy, order.toUpperCase()]],
             offset,
@@ -354,7 +351,7 @@ const getAllNewslettersService = async (query) => {
             totalPages: Math.ceil(count / limit),
             newsletters: rows,
         })
-    } catch (err) { 
+    } catch (err) {
         return error(err, 400);
     }
 };

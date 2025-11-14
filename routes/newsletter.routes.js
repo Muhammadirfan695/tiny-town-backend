@@ -46,7 +46,7 @@ router.delete(
 );
 
 router.patch(
-    "/newsletter/:id",
+    "/newsletter/:id/status",
     apiKeyAuth,
     authorize("Admin"),
     readyNewsletter
