@@ -1,5 +1,5 @@
 const { success, error } = require("../helpers/response.helper");
-const { Newsletter, NewsletterRecipient, User, sequelize, Restaurant, Attachment } = require("../models");
+const { Newsletter, NewsletterRecipient, User, sequelize, Restaurant, Attachment, Menu, Dish } = require("../models");
 const sendEmailToRecipient = require("../queue/emailQueue");
 const { createAttachment, findOneAttachment, deleteAttachment, findAllAttachments } = require("./attachment.service");
 
@@ -80,7 +80,7 @@ const createNewsletterService = async (data, files = []) => {
 
         await transaction.commit();
 
-      
+
 
         return success("Newsletter Created Successfully", newsletter, 200);
 
@@ -126,9 +126,7 @@ const updateNewsletterService = async (data, files = []) => {
 
         const previousRestaurantId = newsletter.restaurant_id;
         const restaurantChanged = restaurantId && restaurantId !== previousRestaurantId;
-        const coreChanged = (title && title !== newsletter.title)
-            || (content && content !== newsletter.content)
-            || restaurantChanged;
+
 
         if (removeAttachmentIds && removeAttachmentIds.length > 0) {
             const attachmentsToRemove = await Attachment.findAll({
@@ -252,7 +250,26 @@ const changeNewsletterStatusService = async (newsletterId, newStatus) => {
                 url: att.path,
                 filename: att.filename
             }));
-
+            let restaurantData = null;
+            if (newsletter.restaurant_id) {
+                restaurantData = await Restaurant.findByPk(newsletter.restaurant_id, {
+                    attributes: ["id", "name", "description"],
+                    include: [
+                        {
+                            model: Menu,
+                            as: "menus",
+                            attributes: ["id", "title"],
+                            include: [
+                                {
+                                    model: Dish,
+                                    as: "dishes",
+                                    attributes: ["id", "name", "price"]
+                                }
+                            ]
+                        }
+                    ]
+                });
+            }
             if (recipients.length > 0) {
                 await Promise.all(recipients.map(n =>
                     sendEmailToRecipient.add(
@@ -269,7 +286,8 @@ const changeNewsletterStatusService = async (newsletterId, newStatus) => {
                                 title: newsletter.title,
                                 content: newsletter.content,
                                 image: newsletterImages,
-                                restaurant_id: newsletter.restaurant_id
+                                restaurant_id: newsletter.restaurant_id,
+                                restaurant: restaurantData
                             }
                         },
                         {

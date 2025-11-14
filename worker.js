@@ -1,0 +1,1 @@
+require('./worker/emailWorker.js')
