@@ -64,6 +64,18 @@ const createNewsletterService = async (data, files = []) => {
             await NewsletterRecipient.bulkCreate(recipientsData, { transaction });
         }
 
+        if (files.length > 0) {
+            for (const file of files) {
+                await createAttachment(
+                    newsletter.id,
+                    "Newsletter",
+                    "newsPromo",
+                    file.path,
+                    file.filename,
+                    transaction
+                );
+            }
+        }
 
 
         await transaction.commit();
