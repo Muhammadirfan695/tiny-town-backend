@@ -22,8 +22,7 @@ const findOneAttachment = async (model_id, model_type, attachment_type, transact
 }
 
 const createAttachment = async (model_id, model_type, attachment_type, image_path, image_name, transaction = null) => {
-
-    console.log(model_id, model_type, attachment_type, image_path, image_name,"------------------")
+ 
     return await Attachment.create(
         {
             model_id: model_id,

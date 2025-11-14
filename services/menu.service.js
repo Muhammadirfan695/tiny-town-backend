@@ -8,12 +8,32 @@ const fs = require("fs");
 const path = require("path");
 
 
-const findAllMenus = async (transaction = null) => {
-  return await Menu.findAll({ transaction });
+const findAllMenus = async (transaction = null, userRole, userId) => {
+  let menuModel = Menu;
+  if (userRole) {
+    if (userRole === "Owner") {
+      menuModel = Menu.scope({ method: ["byOwner", userId] });
+    } else if (userRole === "Manager") {
+      menuModel = Menu.scope({ method: ["byManager", userId] });
+    }
+
+  }
+  return await menuModel.findAll({ transaction });
+
+
 };
 
-const validateMenusExistService = async (menuIds, transaction = null) => {
-  const existingMenus = await Menu.findAll({
+const validateMenusExistService = async (menuIds, transaction = null, userRole, userId) => {
+  let menuModel = Menu;
+  if (userRole) {
+    if (userRole === "Owner") {
+      menuModel = Menu.scope({ method: ["byOwner", userId] });
+    } else if (userRole === "Manager") {
+      menuModel = Menu.scope({ method: ["byManager", userId] });
+    }
+
+  }
+  const existingMenus = await menuModel.findAll({
     where: { id: menuIds },
     attributes: ["id"],
     transaction,
@@ -24,8 +44,17 @@ const validateMenusExistService = async (menuIds, transaction = null) => {
 
   return { valid: missingIds.length === 0, missingIds };
 };
-const findMenuById = async (id, transaction = null) => {
-  return await Menu.findByPk(id, {
+const findMenuById = async (id, transaction = null, userRole, userId) => {
+  let menuModel = Menu;
+  if (userRole) {
+    if (userRole === "Owner") {
+      menuModel = Menu.scope({ method: ["byOwner", userId] });
+    } else if (userRole === "Manager") {
+      menuModel = Menu.scope({ method: ["byManager", userId] });
+    }
+
+  }
+  return await menuModel.findByPk(id, {
     include: [
       {
         model: Restaurant,
@@ -40,19 +69,31 @@ const findMenuById = async (id, transaction = null) => {
 };
 
 
-const createMenuService = async (data, files = null) => {
+const createMenuService = async (data, files = null, userRole, userId) => {
   const transaction = await sequelize.transaction();
   try {
     const { restaurant_id, name, description, timingStart, timingEnd, status } = data
 
-    const restaurant = await findRestaurantByIdService(restaurant_id)
+    const restaurant = await findRestaurantByIdService(restaurant_id, userRole, userId)
     if (!restaurant) {
       await transaction.rollback();
       return error('No Restaurant Found', 404)
     }
-    const existingMenu = await Menu.findOne({
+
+    let menuModel = Menu;
+
+    if (userRole) {
+      if (userRole === "Owner") {
+        menuModel = Menu.scope({ method: ["byOwner", userId] });
+      } else if (userRole === "Manager") {
+        menuModel = Menu.scope({ method: ["byManager", userId] });
+      }
+    }
+
+
+    const existingMenu = await menuModel.findOne({
       where: { restaurant_id },
-      transaction
+      transaction,
     });
     if (existingMenu) {
       await transaction.rollback();
@@ -101,7 +142,7 @@ const createMenuService = async (data, files = null) => {
     return error("Failed to create menu", 500)
   }
 };
-const getAllMenusService = async (query) => {
+const getAllMenusService = async (query, userRole, userId) => {
   try {
     const {
       name,
@@ -137,7 +178,27 @@ const getAllMenusService = async (query) => {
     }
 
     const offset = (parseInt(page) - 1) * parseInt(limit);
-    const { count, rows } = await Menu.findAndCountAll({
+
+    let menuModel = Menu;
+    if (userRole) {
+      if (userRole === "Owner") {
+        menuModel = Menu.scope({ method: ["byOwner", userId] });
+      } else if (userRole === "Manager") {
+        menuModel = Menu.scope({ method: ["byManager", userId] });
+      }
+
+    }
+    let RestaurantModel = Restaurant;
+    if (userRole) {
+      if (userRole === "Owner") {
+        RestaurantModel = Restaurant.scope({ method: ["byOwner", userId] });
+      } else if (userRole === "Manager") {
+        RestaurantModel = Restaurant.scope({ method: ["byManager", userId] });
+      }
+    }
+
+    const allResturant = await RestaurantModel.findAll()
+    const { count, rows } = await menuModel.findAndCountAll({
       where,
       include: [
         {
@@ -157,7 +218,7 @@ const getAllMenusService = async (query) => {
         const model_id = menu.id;
 
         const existingStat = await MenuRestaurantStats.findOne({
-          where: { model_id,  type },
+          where: { model_id, type },
         });
 
         if (existingStat) {
@@ -176,7 +237,9 @@ const getAllMenusService = async (query) => {
       page: parseInt(page),
       limit: parseInt(limit),
       totalPages: Math.ceil(count / limit),
+      allResturant:allResturant,
       data: rows,
+     
     });
   } catch (err) {
     console.error("Error fetching menus:", err);
@@ -184,11 +247,11 @@ const getAllMenusService = async (query) => {
   }
 };
 
-const updateMenuService = async (data, files = null) => {
+const updateMenuService = async (data, files = null, userRole, userId) => {
   const transaction = await sequelize.transaction();
 
   try {
-    const menu = await findMenuById(data.id, transaction)
+    const menu = await findMenuById(data.id, transaction, userRole, userId)
 
 
     if (!menu) {
@@ -197,7 +260,7 @@ const updateMenuService = async (data, files = null) => {
     }
 
     if (data.restaurant_id) {
-      const restaurant = await findRestaurantByIdService(data.restaurant_id);
+      const restaurant = await findRestaurantByIdService(data.restaurant_id, userRole, userId);
       if (!restaurant) {
         await transaction.rollback();
         return error("Restaurant not found", 404);
@@ -250,11 +313,11 @@ const updateMenuService = async (data, files = null) => {
   }
 };
 
-const deleteMenuService = async (id) => {
+const deleteMenuService = async (id, userRole, userId) => {
   const transaction = await sequelize.transaction();
 
   try {
-    const menu = await findMenuById(id, transaction);
+    const menu = await findMenuById(id, transaction, userRole, userId);
     if (!menu) {
       await transaction.rollback();
       return error("Menu not found", 404);

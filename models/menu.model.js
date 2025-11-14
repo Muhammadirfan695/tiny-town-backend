@@ -1,5 +1,6 @@
 const { DataTypes } = require("sequelize");
 const { sequelize } = require("../config/db");
+const Restaurant = require("./restaurant.model");
 
 
 const Menu = sequelize.define(
@@ -34,18 +35,45 @@ const Menu = sequelize.define(
       onDelete: "CASCADE",
     },
     qr_normal: {
-        type: DataTypes.STRING,
-        allowNull: true,
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     qr_light: {
-        type: DataTypes.STRING,
-        allowNull: true,
+      type: DataTypes.STRING,
+      allowNull: true,
     },
 
   },
   {
     timestamps: true,
     freezeTableName: true,
+    scopes: {
+      byOwner(ownerId) {
+        return {
+          include: [
+            {
+              model: Restaurant,
+              as: "restaurant",
+              required: true,
+              where: { owner_id: ownerId }
+            },
+          ],
+        };
+      },
+
+      byManager(managerId) {
+        return {
+          include: [
+            {
+              model: Restaurant,
+              as: "restaurant",
+              required: true,
+              where: { manager_id: managerId }
+            },
+          ],
+        };
+      },
+    },
   }
 );
 

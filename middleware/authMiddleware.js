@@ -16,7 +16,7 @@ const protect = expressAsyncHandler(async (req, res, next) => {
 
     if (!token) {
       return res.status(401).json({
-        succeeded: false,
+        succeeded: false, status:401,
         message: "Not Authorized"
       });
     }
@@ -25,27 +25,27 @@ const protect = expressAsyncHandler(async (req, res, next) => {
       if (err) {
         if (err.name === "TokenExpiredError") {
           return res.status(401).json({
-            succeeded: false,
-            message: "Token Expired",
+            succeeded: false, status:401,
+            message: "Session Expired",
           });
         } else if (err.name === "JsonWebTokenError") {
           return res.status(401).json({
-            succeeded: false,
+            succeeded: false, status:401,
             message: 'Invalid Token',
           });
         } else if (err.name === "NotBeforeError") {
           return res.status(401).json({
             succeeded: false,
+            status:401,
             message: "Token Not Active",
           });
         } else {
           return res.status(401).json({
-            succeeded: false,
+            succeeded: false, status:401,
             message: "Not Authorized or Expired Token"
           });
         }
-      }
-      console.log("decodedToken", decodedToken)
+      } 
 
       req.userId = decodedToken.id;
       req.userRole = decodedToken.role;
@@ -74,7 +74,7 @@ const authorize = (...allowedRoles) =>
 
       if (!token) {
         return res.status(401).json({
-          succeeded: false,
+          succeeded: false, status:401,
           message: "Not Authorized"
         });
       }
@@ -83,28 +83,27 @@ const authorize = (...allowedRoles) =>
         if (err) {
           if (err.name === "TokenExpiredError") {
             return res.status(401).json({
-              succeeded: false,
-              message: "Token Expired",
+              succeeded: false, status:401,
+              message: "Session Expired",
             });
           } else if (err.name === "JsonWebTokenError") {
             return res.status(401).json({
-              succeeded: false,
+              succeeded: false, status:401,
               message: "Invalid Token"
             });
           } else {
             return res.status(401).json({
-              succeeded: false,
+              succeeded: false, status:401,
               message: "Not Authorized or Expire Token"
             });
           }
         }
 
         req.userId = decodedToken.id;
-        req.userRole = decodedToken.role;
-
+        req.userRole = decodedToken.role; 
         if (allowedRoles.length && !allowedRoles.includes(req.userRole)) {
           return res.status(403).json({
-            succeeded: false,
+            succeeded: false, status:403,
             message: "Permission Denied"
           });
         }
@@ -135,7 +134,7 @@ const apiKeyAuth = (req, res, next) => {
   if (req.originalUrl.startsWith("/api/admin")) {
     if (!reqAdminKey || reqAdminKey !== adminKey) {
       return res.status(401).json({
-        succeeded: false,
+        succeeded: false, status:401,
         message: "Admin API KEY is Missing or Invalid"
       });
     }
@@ -144,7 +143,7 @@ const apiKeyAuth = (req, res, next) => {
 
   if (!reqApiKey || reqApiKey !== regularKey) {
     return res.status(401).json({
-      succeeded: false,
+      succeeded: false, status:401,
       message: "API KEY is Missing or Invalid"
     });
   }
@@ -154,7 +153,7 @@ const apiKeyAuth = (req, res, next) => {
 
 const validateRequest = (req, res, next) => {
   const errors = validationResult(req);
-  console.log("req.body",req.body)
+ 
   if (!errors.isEmpty()) {
     const formattedErrors = errors.array().map((err) => ({
       field: err.path,

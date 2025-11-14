@@ -14,7 +14,8 @@ const createMenu = asyncHandler(async (req, res) => {
     handleResponse(res, result);
 });
 const getAllMenus = asyncHandler(async (req, res) => {
-    const result = await getAllMenusService(req.query);
+    const { userId, userRole } = req
+    const result = await getAllMenusService(req.query, userRole, userId);
     handleResponse(res, result);
 });
 
@@ -42,27 +43,28 @@ const menuById = asyncHandler(async (req, res) => {
     const {
         id
     } = req.params;
-    const result = await findMenuById(id);
+    const { userRole, userId } = req
+    const result = await findMenuById(id, null, userRole, userId);
 
     if (!result) {
         return res.status(404).json(error("Menu not found", 404));
     }
- 
+
     const type = "menu";
     const model_id = id;
 
     const existingStat = await MenuRestaurantStats.findOne({
-      where: { model_id,  type },
+        where: { model_id, type },
     });
 
     if (existingStat) {
-      await existingStat.increment("detail", { by: 1 });
+        await existingStat.increment("detail", { by: 1 });
     } else {
-      await MenuRestaurantStats.create({
-        model_id,
-        type,
-        detail: 1,
-      });
+        await MenuRestaurantStats.create({
+            model_id,
+            type,
+            detail: 1,
+        });
     }
     return res.status(200).json(success("Menu Fetched Successfully", result, 200));
 
@@ -70,9 +72,10 @@ const menuById = asyncHandler(async (req, res) => {
 
 const deleteMenu = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const result = await deleteMenuService(id);
+    const { userRole, userId } = req
+    const result = await deleteMenuService(id,userRole, userId);
     return res.status(result.statusCode || 200).json(result);
-  });
+});
 
 module.exports = {
     createMenu,

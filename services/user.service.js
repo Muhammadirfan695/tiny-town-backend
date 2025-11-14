@@ -39,7 +39,7 @@ const findUserById = async (id, transaction = null) => {
 
 const createOtpWithExpiry = () => {
   const otp = generateOTP();
-  const expires = new Date(Date.now() + 10 * 60 * 1000); 
+  const expires = new Date(Date.now() + 10 * 60 * 1000);
   return { otp, expires };
 };
 
@@ -239,7 +239,7 @@ const getAllUsersService = async (query) => {
         ),
       ];
     }
-    
+
     if (email)
       where.email = { [Op.iLike]: `%${email.trim()}%` };
 
@@ -295,7 +295,7 @@ const getAllUsersService = async (query) => {
 };
 
 
-const deleteUserService = async (userId, { hardDelete = false } = {}) => {
+const deleteUserService = async (userId, { hardDelete = true } = {}) => {
   const transaction = await sequelize.transaction();
 
   try {
@@ -314,7 +314,16 @@ const deleteUserService = async (userId, { hardDelete = false } = {}) => {
       return success("User soft-deleted successfully", { data: { id: user.id } });
     }
 
-
+    await Restaurant.update(
+      {
+        owner_id: sequelize.literal(`CASE WHEN owner_id='${userId}' THEN NULL ELSE owner_id END`),
+        manager_id: sequelize.literal(`CASE WHEN manager_id='${userId}' THEN NULL ELSE manager_id END`),
+      },
+      {
+        where: { [sequelize.Op.or]: [{ owner_id: userId }, { manager_id: userId }] },
+        transaction,
+      }
+    );
     const avatarAttachment = await findOneAttachment(user.id, "User", "avatar", transaction);
     if (avatarAttachment) {
       await deleteAttachment(avatarAttachment, transaction);
@@ -329,7 +338,7 @@ const deleteUserService = async (userId, { hardDelete = false } = {}) => {
 
     await removeUserRole(user.id, null, transaction)
 
-    await user.destroy({ transaction });
+    await user.destroy({ force: true, transaction });
 
     await transaction.commit();
     return success("User permanently deleted", { data: { id: user.id } });
@@ -388,8 +397,7 @@ const updateUserProfileService = async (data, file = null) => {
     }
 
     const { roles, email, ...userData } = data;
-
-    console.log("req.file", roles)
+ 
     if (user.provider === "local") {
       if (email && email !== user.email) {
         userData.email = email;
@@ -409,7 +417,6 @@ const updateUserProfileService = async (data, file = null) => {
         ? roles
         : roles.split(",").map((r) => r.trim());
       const existingRoles = await getAllRoleByIds(roleIds, transaction);
-      console.log("rolesrolesroles", existingRoles);
 
       if (existingRoles.length !== roleIds.length) {
         await transaction.rollback();
@@ -424,8 +431,7 @@ const updateUserProfileService = async (data, file = null) => {
       const existingAvatar = await findOneAttachment(user.id, "User", "avatar", transaction);
       if (existingAvatar) {
         await deleteAttachment(existingAvatar, transaction);
-      }
-      console.log(file, "file----", file.path)
+      } 
       await createAttachment(
         user.id,
         "User",

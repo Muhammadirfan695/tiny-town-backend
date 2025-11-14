@@ -1,6 +1,5 @@
 const { DataTypes } = require("sequelize");
 const { sequelize } = require("../config/db");
-const Attachment = require("./attachment.model");
 
 const Newsletter = sequelize.define(
   "Newsletter",
@@ -25,6 +24,15 @@ const Newsletter = sequelize.define(
     status: {
       type: DataTypes.ENUM('draft', 'ready', 'completed'),
       defaultValue: 'draft',
+    },
+    restaurant_id: {
+      type: DataTypes.UUID,
+      references: {
+        model: 'Restaurant',
+        key: 'id'
+      },
+      allowNull: true,
+      onDelete: "CASCADE",
     },
   },
   {

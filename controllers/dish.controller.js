@@ -18,8 +18,9 @@ const createDish = asyncHandler(async (req, res) => {
         validity_end,
         published,
         menuIds,
-        restaurant_id,tags
+        restaurant_id, tags
     } = req.body;
+    const { userRole, userId } = req
     const result = await createDishService({
         name,
         description,
@@ -31,7 +32,8 @@ const createDish = asyncHandler(async (req, res) => {
         menuIds,
         restaurant_id,
         tags
-    }, req.files);
+    }, req.files,
+        userRole, userId);
     handleResponse(res, result);
 
 
@@ -39,11 +41,12 @@ const createDish = asyncHandler(async (req, res) => {
 
 const getDish = asyncHandler(async (req, res) => {
     const t = await sequelize.transaction();
+    const { userId, userRole } = req
     try {
         const {
             id,
         } = req.params;
-        const dish = await findDishById(id, t);
+        const dish = await findDishById(id, t, userId, userRole);
         await t.commit();
 
         res.status(201).json({
@@ -67,7 +70,7 @@ const getDish = asyncHandler(async (req, res) => {
 const getAllDishes = asyncHandler(async (req, res) => {
     const { page, limit, name, minPrice, maxPrice, validityDate, published, quantity, menuIds, restaurantId, notInMenuIds, excludeRestaurantId } = req.query;
 
-
+    const { userId, userRole } = req
     let menusArray = undefined;
     if (menuIds) {
         menusArray = menuIds.split(",");
@@ -91,7 +94,7 @@ const getAllDishes = asyncHandler(async (req, res) => {
         limit: limit ? parseInt(limit) : 10,
     };
 
-    const result = await getAllDishesService(filters, pagination);
+    const result = await getAllDishesService(filters, pagination, userId, userRole);
 
     handleResponse(res, result)
 });
@@ -110,7 +113,7 @@ const updateDish = asyncHandler(async (req, res) => {
         existingAttachmentIds = [],
         tags
     } = req.body;
-
+    const { userId, userRole } = req
     const result = await updateDishService({
         id,
         name,
@@ -123,56 +126,26 @@ const updateDish = asyncHandler(async (req, res) => {
         menuIds,
         existingAttachmentIds,
         tags
-    }, req.files);
+    }, req.files, userId, userRole);
     handleResponse(res, result)
 });
 
 
 const deleteDish = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const result = await deleteDishService(id);
+    const { userId, userRole } = req
+    const result = await deleteDishService(id, userId, userRole);
     handleResponse(res, result)
 });
 
 
-const setMenuToDishs = asyncHandler(async (req, res) => {
-    const t = await sequelize.transaction();
-    try {
-        const { dishId, menuIds } = req.body;
-
-
-        const dish = await findDishById(dishId, t)
-        if (!dish) {
-            await t.rollback();
-            return error('Dish Not Found', 404)
-        }
-
-        const { valid, missingIds } = await validateMenusExistService(menuIds, t);
-        if (!valid) {
-            await t.rollback();
-            return error(`The following menu IDs do not exist: ${missingIds.join(", ")}`, 404)
-        }
-
-        await setDishMenusService(dish, menuIds, t);
-        await t.commit();
-        return success("Menus assigned to dish successfully",
-            { dishId, menuIds }, 200)
-
-    } catch (err) {
-        if (!t.finished) await t.rollback();
-        console.error(error);
-        return error("Failed to assign menus to dish", 500)
-
-    }
-});
 
 
 const setMenuToDish = asyncHandler(async (req, res) => {
     const t = await sequelize.transaction();
+    const { userId, userRole } = req
     try {
         const { dishIds, menuId } = req.body;
-
-        console.log(dishIds, "ddddd", menuId);
 
         if (!Array.isArray(dishIds) || !dishIds.length) {
             await t.rollback();
@@ -183,8 +156,14 @@ const setMenuToDish = asyncHandler(async (req, res) => {
             await t.rollback();
             return handleResponse(res, error("menuId must be a valid string", 400));
         }
+        let dishModel = Dish
+        if (userRole === "Owner") {
+            dishModel = Dish.scope({ method: ["byOwner", userId] });
+        } else if (userRole === "Manager") {
+            dishModel = Dish.scope({ method: ["byManager", userId] });
+        }
 
-        const dishes = await Dish.findAll({
+        const dishes = await dishModel.findAll({
             where: { id: dishIds },
             transaction: t,
         });
@@ -200,7 +179,7 @@ const setMenuToDish = asyncHandler(async (req, res) => {
             );
         }
 
-        const { valid, missingIds } = await validateMenusExistService([menuId], t);
+        const { valid, missingIds } = await validateMenusExistService([menuId], t, userRole, userId);
         if (!valid) {
             await t.rollback();
             return handleResponse(res, error(`Menu not found: ${missingIds.join(", ")}`, 404));
@@ -224,10 +203,10 @@ const setMenuToDish = asyncHandler(async (req, res) => {
 
 const removeDishFromMenu = asyncHandler(async (req, res) => {
     const t = await sequelize.transaction();
+    const { userId, userRole } = req
     try {
         const { dishIds, menuId } = req.body;
 
-        console.log(dishIds, "removing from menu:", menuId);
 
         if (!Array.isArray(dishIds) || !dishIds.length) {
             await t.rollback();
@@ -238,8 +217,13 @@ const removeDishFromMenu = asyncHandler(async (req, res) => {
             await t.rollback();
             return handleResponse(res, error("menuId must be a valid string", 400));
         }
-
-        const dishes = await Dish.findAll({
+        let dishModel = Dish
+        if (userRole === "Owner") {
+            dishModel = Dish.scope({ method: ["byOwner", userId] });
+        } else if (userRole === "Manager") {
+            dishModel = Dish.scope({ method: ["byManager", userId] });
+        }
+        const dishes = await dishModel.findAll({
             where: { id: dishIds },
             transaction: t,
         });
@@ -255,7 +239,7 @@ const removeDishFromMenu = asyncHandler(async (req, res) => {
             );
         }
 
-        const { valid, missingIds } = await validateMenusExistService([menuId], t);
+        const { valid, missingIds } = await validateMenusExistService([menuId], t, userRole, userId);
         if (!valid) {
             await t.rollback();
             return handleResponse(res, error(`Menu not found: ${missingIds.join(", ")}`, 404));

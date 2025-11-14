@@ -31,22 +31,22 @@
  *                 type: string
  *                 enum: [manual, weekly]
  *                 default: manual
- *               restaurantIds:
- *                 type: array
- *                 items:
- *                   type: string
- *                   format: uuid
- *                 example: ["a1b2c3d4-e5f6-7890-1234-56789abcdef0"]
+ *               restaurantId:
+ *                 type: string
+ *                 format: uuid
+ *                 example: "a1b2c3d4-e5f6-7890-1234-56789abcdef0"
  *               recipientEmails:
  *                 type: array
  *                 items:
  *                   type: string
  *                   format: email
  *                 example: ["john@example.com", "guest@example.com"]
- *               image:
- *                 type: string
- *                 format: binary
- *                 description: Optional image attachment for the newsletter
+ *               files:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: Optional multiple image attachments
  *     responses:
  *       201:
  *         description: Newsletter created successfully
@@ -113,28 +113,28 @@
  *                 type: string
  *                 enum: [manual, weekly]
  *                 example: manual
- *               status:
+ *               restaurantId:
  *                 type: string
- *                 enum: [draft, ready, completed]
- *                 example: draft
- *               restaurantIds:
- *                 type: array
- *                 items:
- *                   type: string
- *                 example: ["f8a22d3a-12a1-4c9a-931a-28b1bcbf1234"]
+ *                 format: uuid
+ *                 example: "f8a22d3a-12a1-4c9a-931a-28b1bcbf1234"
  *               recipientEmails:
  *                 type: array
  *                 items:
  *                   type: string
  *                 example: ["user1@example.com", "user2@example.com"]
- *               removeImage:
- *                 type:  boolean
- *                 description: Whether the remove Image or not
- *                 example: true
- *               file:
- *                 type: string
- *                 format: binary
- *                 description: Upload new newsletter image (replaces existing one if present)
+ *               removeAttachmentIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: uuid
+ *                 description: IDs of attachments to remove
+ *                 example: ["a1b2c3d4-e5f6-7890-1234-56789abcdef0"]
+ *               files:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: Upload new files to add as attachments
  *     responses:
  *       200:
  *         description: Newsletter updated successfully
@@ -164,6 +164,81 @@
  *                       type: string
  *       400:
  *         description: Invalid input or validation error
+ *       404:
+ *         description: Newsletter not found
+ *       500:
+ *         description: Server error
+ */
+
+
+
+/**
+ * @swagger
+ * /api/newsletters/newsletter/{id}/status:
+ *   patch:
+ *     summary: Change newsletter status
+ *     description: |
+ *       Updates the status of a newsletter.  
+ *       - Only `draft` newsletters can be changed to `ready`.  
+ *       - When changing to `ready`, all recipients will be queued for sending emails.  
+ *       - This endpoint does not modify the newsletter content, title, or attachments.
+ *     tags:
+ *       - Newsletters
+ *     security:
+ *       - bearerAuth: []
+ *       - ApiKeyAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         description: Newsletter ID
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [draft, ready, completed]
+ *                 description: New status for the newsletter
+ *                 example: ready
+ *     responses:
+ *       200:
+ *         description: Newsletter status updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Newsletter status updated successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     title:
+ *                       type: string
+ *                     content:
+ *                       type: string
+ *                     type:
+ *                       type: string
+ *                     status:
+ *                       type: string
+ *                       example: ready
+ *       400:
+ *         description: Invalid status transition or request
  *       404:
  *         description: Newsletter not found
  *       500:

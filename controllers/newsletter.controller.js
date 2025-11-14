@@ -1,15 +1,17 @@
 
 const asyncHandler = require('express-async-handler');
 const { handleResponse, error, success, } = require('../helpers/response.helper');
-const { createNewsletterService, updateNewsletterService, getAllNewslettersService, findNewsletterById, deleteNewsletterService } = require('../services/newsletter.service');
+const { createNewsletterService, updateNewsletterService, getAllNewslettersService, findNewsletterById, deleteNewsletterService, changeNewsletterStatusService } = require('../services/newsletter.service');
 
 
 const createNewsletter = asyncHandler(async (req, res) => {
-    const result = await createNewsletterService(req.body, req.file);
+    const files = req.files || [];
+    const result = await createNewsletterService(req.body, files);
     handleResponse(res, result);
 });
 const updateNewsletter = asyncHandler(async (req, res) => {
-    const result = await updateNewsletterService(req.body, req.file)
+    const files = req.files || [];
+    const result = await updateNewsletterService(req.body, files)
     handleResponse(res, result);
 })
 const getAllNewsletter = asyncHandler(async (req, res) => {
@@ -36,10 +38,18 @@ const deleteNewsletterById = asyncHandler(async (req, res) => {
     }
     return res.status(200).json(success("Newsletter Fetched Successfully", result, 200));
 })
+
+const readyNewsletter = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+    const result = await changeNewsletterStatusService(id, status)
+    handleResponse(res, result);
+})
 module.exports = {
     createNewsletter,
     updateNewsletter,
     getAllNewsletter,
     getNewsletterById,
-    deleteNewsletterById
+    deleteNewsletterById,
+    readyNewsletter
 }

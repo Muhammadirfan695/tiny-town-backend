@@ -1,46 +1,49 @@
 const { success, error } = require("../helpers/response.helper");
-const { Newsletter, NewsletterRecipient, User, sequelize, Restaurant, Attachment } = require("../models");
-const { createAttachment, findOneAttachment, deleteAttachment } = require("./attachment.service");
+const { Newsletter, NewsletterRecipient, User, sequelize, Restaurant, Attachment, Menu, Dish } = require("../models");
+const sendEmailToRecipient = require("../queue/emailQueue");
+const { createAttachment, findOneAttachment, deleteAttachment, findAllAttachments } = require("./attachment.service");
 
 const findNewsletterById = async (id, transaction = null) => {
     return await Newsletter.findByPk(id, {
         include: [
             {
                 model: Restaurant,
-                as: "restaurants",
                 attributes: ["id", "name"],
-                through: { attributes: [] },
             },
             {
                 model: Attachment,
                 as: "attachments",
             },
+            {
+                model: NewsletterRecipient,
+                as: "recipients",
+            },
         ], transaction,
     });
 };
 
-const createNewsletterService = async (data, file) => {
+
+
+
+const createNewsletterService = async (data, files = []) => {
     const transaction = await sequelize.transaction();
     try {
-        let { title, content, type = 'manual', restaurantIds = [], recipientEmails = [] } = data;
+        let { title, content, type = 'manual', restaurantId = null, recipientEmails = [] } = data;
 
-        if (typeof restaurantIds === "string") {
-            restaurantIds = restaurantIds.split(",").map(id => id.trim()).filter(Boolean);
-        }
+        restaurantId = restaurantId ? String(restaurantId).trim() : null;
+
         if (typeof recipientEmails === "string") {
             recipientEmails = recipientEmails.split(",").map(email => email.trim()).filter(Boolean);
         }
 
         const newsletter = await Newsletter.create(
-            { title, content, type },
+            { title, content, type, restaurant_id: restaurantId },
             { transaction }
         );
-        if (restaurantIds.length) {
-            await newsletter.setRestaurants(restaurantIds, { transaction });
-        }
 
+        let recipients = [];
         if (recipientEmails.length) {
-            const normalizedEmails = recipientEmails.map(email => email.trim().toLowerCase());
+            const normalizedEmails = recipientEmails.map(email => email.toLowerCase().trim());
 
             const users = await User.findAll({
                 where: { email: normalizedEmails },
@@ -54,26 +57,32 @@ const createNewsletterService = async (data, file) => {
                     user_id: user ? user.id : null,
                     email,
                     status: 'pending',
+                    restaurant_id: restaurantId
                 };
             });
 
             await NewsletterRecipient.bulkCreate(recipientsData, { transaction });
         }
-        if (file) {
-            await createAttachment(
-                newsletter.id,
-                "Newsletter",
-                "newsPromo",
-                file.path,
-                file.filename,
-                transaction
-            );
+
+        if (files.length > 0) {
+            for (const file of files) {
+                await createAttachment(
+                    newsletter.id,
+                    "Newsletter",
+                    "newsPromo",
+                    file.path,
+                    file.filename,
+                    transaction
+                );
+            }
         }
+
+
         await transaction.commit();
-        return success("NewsLetter Created Successfully", newsletter, 200);
 
 
 
+        return success("Newsletter Created Successfully", newsletter, 200);
 
     } catch (err) {
         await transaction.rollback();
@@ -82,100 +91,102 @@ const createNewsletterService = async (data, file) => {
 };
 
 
-const updateNewsletterService = async (data, file) => {
+
+
+const updateNewsletterService = async (data, files = []) => {
     const transaction = await sequelize.transaction();
     try {
-        let { id, title, content, type, status, restaurantIds = [], recipientEmails = [], removeImage } = data;
-        const newsletter = await findNewsletterById(id, transaction)
-        if (typeof restaurantIds === "string") {
-            restaurantIds = restaurantIds.split(",").map(id => id.trim()).filter(Boolean);
-        }
+        let {
+            id,
+            title,
+            content,
+            type,
+            restaurantId = null,
+            recipientEmails = [],
+            removeAttachmentIds = []
+        } = data;
+
+        restaurantId = restaurantId ? String(restaurantId).trim() : null;
+
         if (typeof recipientEmails === "string") {
             recipientEmails = recipientEmails.split(",").map(email => email.trim()).filter(Boolean);
         }
+
+        const newsletter = await Newsletter.findByPk(id, { transaction });
 
         if (!newsletter) {
             await transaction.rollback();
             return error("Newsletter not found", 404);
         }
 
-        if (file) {
-            const existingAttachment = await findOneAttachment(
-                newsletter.id,
-                "Newsletter",
-                "newsPromo",
-                transaction
-            );
+        if (newsletter.status !== "draft") {
+            await transaction.rollback();
+            return error("Only draft newsletters can be updated", 400);
+        }
 
-            if (existingAttachment) {
-                await deleteAttachment(existingAttachment, transaction);
+        const previousRestaurantId = newsletter.restaurant_id;
+        const restaurantChanged = restaurantId && restaurantId !== previousRestaurantId;
+
+
+        if (removeAttachmentIds && removeAttachmentIds.length > 0) {
+            const attachmentsToRemove = await Attachment.findAll({
+                where: {
+                    id: removeAttachmentIds,
+                    model_id: newsletter.id,
+                    model_type: "Newsletter"
+                },
+                transaction
+            });
+
+            for (const attachment of attachmentsToRemove) {
+                await deleteAttachment(attachment, transaction);
             }
+        }
 
-            await createAttachment(
-                newsletter.id,
-                "Newsletter",
-                "newsPromo",
-                file.path,
-                file.filename,
-                transaction
-            );
-        } else if (removeImage === true || removeImage === "true") {
-
-            const existingAttachment = await findOneAttachment(
-                newsletter.id,
-                "Newsletter",
-                "newsPromo",
-                transaction
-            );
-            if (existingAttachment) {
-                await deleteAttachment(existingAttachment, transaction);
+        if (files.length > 0) {
+            for (const file of files) {
+                await createAttachment(
+                    newsletter.id,
+                    "Newsletter",
+                    "newsPromo",
+                    file.path,
+                    file.filename,
+                    transaction
+                );
             }
         }
 
         if (title) newsletter.title = title;
         if (content) newsletter.content = content;
         if (type) newsletter.type = type;
-        if (status) newsletter.status = status;
+        if (restaurantId) newsletter.restaurant_id = restaurantId;
+
         await newsletter.save({ transaction });
 
+        let newRecipients = [];
 
-        if (restaurantIds && restaurantIds.length) {
-            await newsletter.setRestaurants(restaurantIds, { transaction });
-        } else {
-            await newsletter.setRestaurants([], { transaction });
+        if (restaurantChanged) {
+            await NewsletterRecipient.update(
+                { restaurant_id: restaurantId },
+                {
+                    where: { newsletter_id: newsletter.id },
+                    transaction
+                }
+            );
         }
 
-
         if (recipientEmails && recipientEmails.length) {
-            const normalizedEmails = recipientEmails.map((e) =>
-                e.trim().toLowerCase()
-            );
+            const normalizedEmails = recipientEmails.map(e => e.toLowerCase().trim());
 
             const existingRecipients = await NewsletterRecipient.findAll({
                 where: { newsletter_id: newsletter.id },
-                attributes: ["id", "email"],
+                attributes: ["id", "email", "user_id", "restaurant_id"],
                 transaction,
             });
 
-            const existingEmails = existingRecipients.map((r) => r.email);
+            const existingEmails = existingRecipients.map(r => r.email.toLowerCase());
 
-            const emailsToAdd = normalizedEmails.filter(
-                (email) => !existingEmails.includes(email)
-            );
-
-            const emailsToRemove = existingEmails.filter(
-                (email) => !normalizedEmails.includes(email)
-            );
-
-            if (emailsToRemove.length) {
-                await NewsletterRecipient.destroy({
-                    where: {
-                        newsletter_id: newsletter.id,
-                        email: emailsToRemove,
-                    },
-                    transaction,
-                });
-            }
+            const emailsToAdd = normalizedEmails.filter(email => !existingEmails.includes(email));
 
             if (emailsToAdd.length) {
                 const users = await User.findAll({
@@ -184,13 +195,14 @@ const updateNewsletterService = async (data, file) => {
                     transaction,
                 });
 
-                const newRecipients = emailsToAdd.map((email) => {
-                    const user = users.find((u) => u.email === email);
+                newRecipients = emailsToAdd.map(email => {
+                    const user = users.find(u => u.email.toLowerCase() === email);
                     return {
                         newsletter_id: newsletter.id,
                         user_id: user ? user.id : null,
                         email,
                         status: "pending",
+                        restaurant_id: restaurantId
                     };
                 });
 
@@ -199,10 +211,105 @@ const updateNewsletterService = async (data, file) => {
         }
 
         await transaction.commit();
-        return success("NewsLetter Updated Successfully", newsletter, 200);
+
+        return success("Newsletter Updated Successfully", newsletter, 200);
+
     } catch (err) {
         await transaction.rollback();
         return error(err, 404);
+    }
+};
+
+
+const changeNewsletterStatusService = async (newsletterId, newStatus) => {
+    const transaction = await sequelize.transaction();
+    try {
+        const newsletter = await Newsletter.findByPk(newsletterId, { transaction });
+
+        if (!newsletter) {
+            await transaction.rollback();
+            return error("Newsletter not found", 404);
+        }
+
+        if (newsletter.status !== "draft" && newStatus === "ready") {
+            await transaction.rollback();
+            return error("Only draft newsletters can be moved to Published", 400);
+        }
+
+        newsletter.status = newStatus;
+        await newsletter.save({ transaction });
+        await transaction.commit();
+
+        if (newStatus === "ready") {
+            const recipients = await NewsletterRecipient.findAll({
+                where: { newsletter_id: newsletter.id },
+            });
+
+            const attachments = await findAllAttachments(newsletter.id, "Newsletter");
+            const newsletterImages = attachments.map(att => ({
+                url: att.path,
+                filename: att.filename
+            }));
+            let restaurantData = null;
+            if (newsletter.restaurant_id) {
+                restaurantData = await Restaurant.findByPk(newsletter.restaurant_id, {
+                    attributes: ["id", "name", "description"],
+                    include: [
+                        {
+                            model: Menu,
+                            as: "menus",
+                            attributes: ["id", "name"],
+                            include: [
+                                {
+                                    model: Dish,
+                                    as: "dishes",
+                                    attributes: ["id", "name", "price"]
+                                }
+                            ]
+                        }
+                    ]
+                });
+            }
+            if (recipients.length > 0) {
+                await Promise.all(recipients.map(n =>
+                    sendEmailToRecipient.add(
+                        "sendRecipientEmail",
+                        {
+                            recipient: {
+                                id: n.id,
+                                email: n.email,
+                                user_id: n.user_id,
+                                restaurant_id: n.restaurant_id
+                            },
+                            newsletter: {
+                                id: newsletter.id,
+                                title: newsletter.title,
+                                content: newsletter.content,
+                                image: newsletterImages,
+                                restaurant_id: newsletter.restaurant_id,
+                                restaurant: restaurantData
+                            }
+                        },
+                        {
+                            attempts: 3,
+                            backoff: {
+                                type: 'exponential',
+                                delay: 10000,
+                            }
+                        }
+                    )
+                ));
+            }
+        }
+
+        return success("Newsletter status updated successfully", newsletter, 200);
+
+    } catch (err) {
+        if (!transaction.finished) {
+            await transaction.rollback();
+        }
+
+        return error(err, 500);
     }
 };
 
@@ -232,13 +339,15 @@ const getAllNewslettersService = async (query) => {
             include: [
                 {
                     model: Restaurant,
-                    as: "restaurants",
                     attributes: ["id", "name"],
-                    through: { attributes: [] },
                 },
                 {
                     model: Attachment,
                     as: "attachments",
+                },
+                {
+                    model: NewsletterRecipient,
+                    as: "recipients",
                 },
             ],
             order: [[sortBy, order.toUpperCase()]],
@@ -268,19 +377,19 @@ const deleteNewsletterService = async (newsletterId) => {
             await transaction.rollback();
             return { status: 404, message: "Newsletter not found" };
         }
-        
+
         const attachment = await findOneAttachment(newsletter.id, "Newsletter", "newsPromo", transaction);
         if (attachment) {
             await deleteAttachment(attachment, transaction);
         }
 
-        
+
         await NewsletterRecipient.destroy({
             where: { newsletter_id: newsletter.id },
             transaction,
         });
-        
-        await newsletter.setRestaurants([], { transaction });
+
+        // await newsletter.setRestaurants([], { transaction });
 
         await newsletter.destroy({ transaction });
 
@@ -299,5 +408,6 @@ module.exports = {
     updateNewsletterService,
     getAllNewslettersService,
     deleteNewsletterService,
-    findNewsletterById
+    findNewsletterById,
+    changeNewsletterStatusService
 }
