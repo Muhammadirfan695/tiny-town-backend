@@ -8,9 +8,7 @@ const findNewsletterById = async (id, transaction = null) => {
         include: [
             {
                 model: Restaurant,
-                as: "restaurants",
                 attributes: ["id", "name"],
-                through: { attributes: [] },
             },
             {
                 model: Attachment,
@@ -336,9 +334,7 @@ const getAllNewslettersService = async (query) => {
             include: [
                 {
                     model: Restaurant,
-                    as: "restaurants",
                     attributes: ["id", "name"],
-                    through: { attributes: [] },
                 },
                 {
                     model: Attachment,
@@ -358,7 +354,7 @@ const getAllNewslettersService = async (query) => {
             totalPages: Math.ceil(count / limit),
             newsletters: rows,
         })
-    } catch (err) {
+    } catch (err) { 
         return error(err, 400);
     }
 };

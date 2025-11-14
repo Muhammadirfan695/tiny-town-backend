@@ -44,8 +44,7 @@ const protect = expressAsyncHandler(async (req, res, next) => {
             message: "Not Authorized or Expired Token"
           });
         }
-      }
-      console.log("decodedToken", decodedToken)
+      } 
 
       req.userId = decodedToken.id;
       req.userRole = decodedToken.role;
@@ -100,8 +99,7 @@ const authorize = (...allowedRoles) =>
         }
 
         req.userId = decodedToken.id;
-        req.userRole = decodedToken.role;
-
+        req.userRole = decodedToken.role; 
         if (allowedRoles.length && !allowedRoles.includes(req.userRole)) {
           return res.status(403).json({
             succeeded: false,
@@ -154,7 +152,7 @@ const apiKeyAuth = (req, res, next) => {
 
 const validateRequest = (req, res, next) => {
   const errors = validationResult(req);
-  console.log("req.body",req.body)
+ 
   if (!errors.isEmpty()) {
     const formattedErrors = errors.array().map((err) => ({
       field: err.path,

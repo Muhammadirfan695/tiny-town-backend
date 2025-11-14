@@ -11,8 +11,9 @@ const setDishMenusService = async (dish, menuIds, transaction) => {
   }
 };
 
-const createDishService = async (data, files = null) => {
+const createDishService = async (data, files = null,userRole, userId) => {
   const t = await sequelize.transaction();
+  
   try {
     let {
       name,
@@ -26,7 +27,7 @@ const createDishService = async (data, files = null) => {
       restaurant_id, tags
     } = data;
     if (menuIds && menuIds.length > 0) {
-      const { valid, missingIds } = await validateMenusExistService(menuIds, t);
+      const { valid, missingIds } = await validateMenusExistService(menuIds, t,userRole, userId);
       if (!valid) {
         await t.rollback();
         return error(`The following menu IDs do not exist: ${missingIds.join(", ")}`, 400)
@@ -91,33 +92,40 @@ const createDishService = async (data, files = null) => {
   }
 };
 
-const findDishById = async (id, transaction = null) => {
-  return await Dish.findByPk(id,
-    {
-      include: [
-        {
-          model: Menu,
-          as: "menus",
-          through: { attributes: [] }
-        },
-        {
-          model: Restaurant,
-          as: "restaurant",
-        },
-        {
-          model: Attachment,
-          as: "attachments"
-        },
-      ], transaction
-    });
+const findDishById = async (id, transaction = null, userId = null, userRole = null) => {
+  let DishModel = Dish;
+  if (userRole === "Owner") {
+    DishModel = Dish.scope({ method: ["byOwner", userId] });
+  } else if (userRole === "Manager") {
+    DishModel = Dish.scope({ method: ["byManager", userId] });
+  }
+
+  return await DishModel.findByPk(id, {
+    include: [
+      {
+        model: Menu,
+        as: "menus",
+        through: { attributes: [] },
+      },
+      {
+        model: Restaurant,
+        as: "restaurant",
+      },
+      {
+        model: Attachment,
+        as: "attachments",
+      },
+    ],
+    transaction,
+  });
 };
 
 
-const deleteDishService = async (id) => {
+const deleteDishService = async (id, userId, userRole) => {
   const t = await sequelize.transaction();
   try {
 
-    const dish = await findDishById(id);
+    const dish = await findDishById(id, t, userId, userRole);
     if (!dish) {
       if (!t.finished) await t.rollback();
       return error("No Dish Found", 404)
@@ -142,7 +150,7 @@ const deleteDishService = async (id) => {
 }
 
 
-const getAllDishesService = async (filters = {}, pagination = {}) => {
+const getAllDishesService = async (filters = {}, pagination = {}, userId, userRole) => {
   let {
     name,
     minPrice,
@@ -190,7 +198,41 @@ const getAllDishesService = async (filters = {}, pagination = {}) => {
     { model: Restaurant, as: "restaurant" },
   ];
 
+  if ((userRole === "Owner" || userRole === "Manager") && menuIds?.length) {
+    const allowedMenus = await Menu.findAll({
+      attributes: ["id"],
+      where: { id: menuIds },
+      include: [
+        {
+          model: Restaurant,
+          as: "restaurant",
+          attributes: ["id"],
+          where: {
+            ...(userRole === "Owner" ? { owner_id: userId } : {}),
+            ...(userRole === "Manager" ? { manager_id: userId } : {}),
+          },
+        },
+      ],
+    });
 
+    const allowedMenuIds = allowedMenus.map((m) => m.id);
+
+
+    if (!allowedMenuIds.length) {
+      return success("Dishes fetched successfully", {
+        data: {
+          dishes: [],
+          total: 0,
+          page,
+          limit,
+          totalPages: 0,
+        },
+      });
+    }
+
+
+    menuIds = allowedMenuIds;
+  }
   if (menuIds?.length) {
     include.push({
       model: Menu,
@@ -228,7 +270,16 @@ const getAllDishesService = async (filters = {}, pagination = {}) => {
     });
   }
 
-  const { rows, count } = await Dish.findAndCountAll({
+  let DishModel = Dish; 
+  if (userRole) {
+    if (userRole === "Owner") {
+      DishModel = Dish.scope({ method: ["byOwner", userId] });
+    } else if (userRole === "Manager") {
+      DishModel = Dish.scope({ method: ["byManager", userId] });
+    }
+  }
+
+  const { rows, count } = await DishModel.findAndCountAll({
     where,
     include,
     limit,
@@ -254,7 +305,7 @@ const getAllDishesService = async (filters = {}, pagination = {}) => {
 
 
 
-const updateDishService = async (data, files = null) => {
+const updateDishService = async (data, files = null, userId, userRole) => {
   const t = await sequelize.transaction();
   try {
     let {
@@ -271,17 +322,17 @@ const updateDishService = async (data, files = null) => {
       tags
     } = data;
 
-    const dish = await findDishById(id, t);
+    const dish = await findDishById(id, t, userId, userRole);
 
     if (!dish) {
       await t.rollback();
       return error('Dish not found', 404)
     }
     tags = Array.isArray(tags)
-    ? tags
-    : typeof tags === "string"
-      ? tags.split(",").map(t => t.trim()).filter(t => t)
-      : [];
+      ? tags
+      : typeof tags === "string"
+        ? tags.split(",").map(t => t.trim()).filter(t => t)
+        : [];
 
 
     await dish.update(

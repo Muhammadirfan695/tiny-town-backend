@@ -112,6 +112,14 @@ const Restaurant = sequelize.define(
     {
         timestamps: true,
         freezeTableName: true,
+        scopes: {
+            byOwner(userId) {
+              return { where: { owner_id: userId } };
+            },
+            byManager(userId) {
+              return { where: { manager_id: userId } };
+            },
+          },
     }
 );
 

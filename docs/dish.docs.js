@@ -7,6 +7,7 @@
  *     tags:
  *       - Dish
  *     security:
+ *       - bearerAuth: []
  *       - ApiKeyAuth: []
  *     requestBody:
  *       required: true
@@ -155,6 +156,7 @@
  *     tags:
  *       - Dish
  *     security:
+ *       - bearerAuth: []
  *       - ApiKeyAuth: []
  *     parameters:
  *       - in: path
@@ -217,6 +219,7 @@
  *     tags:
  *       - Dish
  *     security:
+ *       - bearerAuth: []
  *       - ApiKeyAuth: []
  *     parameters:
  *       - in: query
@@ -329,6 +332,7 @@
  *     tags:
  *       - Dish
  *     security:
+ *       - bearerAuth: []
  *       - ApiKeyAuth: []
  *     requestBody:
  *       required: true
@@ -487,6 +491,7 @@
  *     tags:
  *       - Dish
  *     security:
+ *       - bearerAuth: []
  *       - ApiKeyAuth: []
  *     requestBody:
  *       required: true
@@ -591,6 +596,7 @@
  *     tags:
  *       - Dish
  *     security:
+ *       - bearerAuth: []
  *       - ApiKeyAuth: []
  *     parameters:
  *       - name: id
@@ -657,6 +663,7 @@
  *     tags:
  *       - Dish
  *     security:
+ *       - bearerAuth: []
  *       - ApiKeyAuth: []
  *     requestBody:
  *       required: true

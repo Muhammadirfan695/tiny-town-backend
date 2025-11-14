@@ -339,8 +339,8 @@ const approveOrRejectSignupRequestService = async (body, reason) => {
       const role = await getRoleByName(request.role);
       if (!role) {
         return error(`Role "${request.role}" does not exist`, 400);
-      }
-      console.log("eeeee", role)
+      } 
+      
       await assignRole(user.id, role.id, transaction);
       await transaction.commit();
 
@@ -354,6 +354,8 @@ const approveOrRejectSignupRequestService = async (body, reason) => {
       await transaction.commit();
 
       await sendAcceptRejectNotify(request.email, "Rejected", request.firstName, request.role)
+
+      await request.destroy()
       return success("Signup request rejected successfully");
     }
 

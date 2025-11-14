@@ -7,6 +7,7 @@
  *     tags:
  *       - Menu
  *     security:
+ *       - bearerAuth: []
  *       - ApiKeyAuth: []    
  *     requestBody:
  *       required: true
@@ -101,6 +102,7 @@
  *     tags:
  *       - Menu
  *     security:
+ *       - bearerAuth: []
  *       - ApiKeyAuth: []  
  *     parameters:
  *       - in: query
@@ -224,6 +226,7 @@
  *     tags:
  *       - Menu
  *     security:
+ *       - bearerAuth: []
  *       - ApiKeyAuth: []  
  *     requestBody:
  *       required: true
@@ -275,6 +278,7 @@
  *     tags:
  *       - Menu
  *     security:
+ *       - bearerAuth: []
  *       - ApiKeyAuth: [] 
  *     parameters:
  *       - in: path
@@ -341,6 +345,7 @@
  *     tags:
  *       - Menu
  *     security:
+ *       - bearerAuth: []
  *       - ApiKeyAuth: [] 
  *     parameters:
  *       - name: id

@@ -12,13 +12,15 @@ const createRestaurant = asyncHandler(async (req, res) => {
 });
 
 const getAllRestaurants = asyncHandler(async (req, res) => {
-  const result = await restaurantService.getAllRestaurantsService(req.query);
+  const { userId, userRole } = req
+  const result = await restaurantService.getAllRestaurantsService(req.query,userId, userRole);
   handleResponse(res, result);
 });
 
 const getRestaurantById = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const result = await restaurantService.findRestaurantByIdService(id);
+  const { userId, userRole } = req
+  const result = await restaurantService.findRestaurantByIdService(id,userId, userRole);
   handleResponse(res, result);
 });
 

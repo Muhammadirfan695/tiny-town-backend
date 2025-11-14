@@ -119,7 +119,7 @@ const createRestaurantService = async (data, files) => {
 };
 
 
-const getAllRestaurantsService = async (query) => {
+const getAllRestaurantsService = async (query, userId, userRole) => {
   try {
     const {
       page = 1,
@@ -136,7 +136,17 @@ const getAllRestaurantsService = async (query) => {
       maxDistance = 10,
       openToday, } = query;
     const offset = (page - 1) * limit;
+    let RestaurantModel = Restaurant;
 
+
+    if (userRole) {
+      if (userRole === "Owner") {
+        RestaurantModel = Restaurant.scope({ method: ["byOwner", userId] });
+      } else if (userRole === "Manager") {
+        RestaurantModel = Restaurant.scope({ method: ["byManager", userId] });
+      }
+
+    }
     const whereClause = {};
 
     if (search) {
@@ -178,7 +188,7 @@ const getAllRestaurantsService = async (query) => {
           + sin(radians(${lat})) * sin(radians("latitude"))
         )
       `);
-      const result = await Restaurant.findAndCountAll({
+      const result = await RestaurantModel.findAndCountAll({
         attributes: {
           include: [[distanceFormula, "distance"]],
         },
@@ -210,7 +220,7 @@ const getAllRestaurantsService = async (query) => {
       restaurants = result.rows;
     } else {
 
-      const result = await Restaurant.findAndCountAll({
+      const result = await RestaurantModel.findAndCountAll({
         where: whereClause,
         limit: parseInt(limit),
         offset: parseInt(offset),
@@ -276,9 +286,17 @@ const getAllRestaurantsService = async (query) => {
   }
 };
 
-const findRestaurantByIdService = async (id) => {
+const findRestaurantByIdService = async (id, userId, userRole) => {
   try {
-    const restaurant = await Restaurant.findByPk(id, {
+    let RestaurantModel = Restaurant;
+    if (userRole) {
+      if (userRole === "Owner") {
+        RestaurantModel = Restaurant.scope({ method: ["byOwner", userId] });
+      } else if (userRole === "Manager") {
+        RestaurantModel = Restaurant.scope({ method: ["byManager", userId] });
+      }
+    }
+    const restaurant = await RestaurantModel.findByPk(id, {
       include: [
         {
           model: User,
@@ -320,10 +338,19 @@ const findRestaurantByIdService = async (id) => {
   }
 };
 
-const updateRestaurantService = async (id, data, files, userRole) => {
+const updateRestaurantService = async (id, data, files, userRole, userId) => {
   const transaction = await sequelize.transaction();
   try {
-    const restaurant = await Restaurant.findByPk(id, { transaction });
+    let RestaurantModel = Restaurant;
+    if (userRole) {
+      if (userRole === "Owner") {
+        RestaurantModel = Restaurant.scope({ method: ["byOwner", userId] });
+      } else if (userRole === "Manager") {
+        RestaurantModel = Restaurant.scope({ method: ["byManager", userId] });
+      }
+    }
+
+    const restaurant = await RestaurantModel.findByPk(id, { transaction });
     if (!restaurant) {
       await transaction.rollback();
       return error("Restaurant not found", 404);
@@ -457,10 +484,18 @@ const updateRestaurantService = async (id, data, files, userRole) => {
 };
 
 
-const deleteRestaurantService = async (id) => {
+const deleteRestaurantService = async (id, userId, userRole) => {
   const transaction = await sequelize.transaction();
   try {
-    const restaurant = await Restaurant.findByPk(id, { transaction });
+    let RestaurantModel = Restaurant;
+    if (userRole) {
+      if (userRole === "Owner") {
+        RestaurantModel = Restaurant.scope({ method: ["byOwner", userId] });
+      } else if (userRole === "Manager") {
+        RestaurantModel = Restaurant.scope({ method: ["byManager", userId] });
+      }
+    }
+    const restaurant = await RestaurantModel.findByPk(id, { transaction });
     if (!restaurant) {
       await transaction.rollback();
       return error("Restaurant not found", 404);
