@@ -329,7 +329,7 @@ const deleteUserService = async (userId, { hardDelete = false } = {}) => {
 
     await removeUserRole(user.id, null, transaction)
 
-    await user.destroy({ transaction });
+    await user.destroy({ force: true, transaction });
 
     await transaction.commit();
     return success("User permanently deleted", { data: { id: user.id } });

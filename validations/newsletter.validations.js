@@ -18,23 +18,12 @@ const createNewsletterValidation = [
         .isIn(["manual", "weekly"])
         .withMessage("Type must be either 'manual' or 'weekly'."),
 
-        body("restaurantIds")
+    body("restaurantId")
         .optional()
         .custom((value) => {
-            let ids = [];
-            if (Array.isArray(value)) {
-                ids = value;
-            } else if (typeof value === "string") {
-                ids = value.split(",").map((id) => id.trim()).filter(Boolean);
-            } else {
-                throw new Error("restaurantIds must be an array or comma-separated string.");
+            if (value && !/^[0-9a-fA-F-]{36}$/.test(value)) {
+                throw new Error(`Invalid restaurant ID: ${value}`);
             }
-
-            ids.forEach((id) => {
-                if (!/^[0-9a-fA-F-]{36}$/.test(id)) {
-                    throw new Error(`Invalid restaurant ID: ${id}`);
-                }
-            });
             return true;
         }),
 

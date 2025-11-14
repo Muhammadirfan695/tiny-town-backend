@@ -15,7 +15,6 @@ const FavouriteRestaurant = require("./favouriteRestaurant.model");
 const MenuRestaurantStats = require('./menuRestaurantStats.model');
 const Newsletter = require('./newsletter.model');
 const NewsletterRecipient = require('./newsLetterRecipients.model');
-const NewsletterRestaurants = require('./newsletterRestaurant.model');
 
 User.belongsToMany(Role, {
   through: UserRole,
@@ -26,12 +25,6 @@ User.belongsToMany(Role, {
   as: "Roles",
 });
 
-User.hasMany(FavouriteRestaurant, {
-  foreignKey: "user_id",
-  as: "favouriteRestaurants",
-  onDelete: "CASCADE",
-})
-
 Role.belongsToMany(User, {
   through: UserRole,
   foreignKey: "role_id",
@@ -40,7 +33,6 @@ Role.belongsToMany(User, {
   onUpdate: "CASCADE",
   as: "Users",
 });
-
 
 Attachment.belongsTo(User, {
   foreignKey: "model_id",
@@ -57,10 +49,13 @@ User.hasMany(Attachment, {
 });
 
 User.hasMany(Restaurant, { foreignKey: 'owner_id', as: 'OwnedRestaurants' });
+
 Restaurant.belongsTo(User, { as: 'Owner', foreignKey: 'owner_id' });
 
 User.hasMany(Restaurant, { foreignKey: 'manager_id', as: 'ManagedRestaurants' });
+
 Restaurant.belongsTo(User, { as: 'Manager', foreignKey: 'manager_id' })
+
 Restaurant.hasMany(Attachment, {
   foreignKey: "model_id",
   constraints: false,
@@ -68,15 +63,9 @@ Restaurant.hasMany(Attachment, {
   as: "attachments",
 });
 
-
 Restaurant.hasMany(Dish, {
   foreignKey: "restaurant_id",
   as: "dishes",
-  onDelete: "CASCADE",
-});
-Restaurant.hasMany(FavouriteRestaurant, {
-  foreignKey: "restaurant_id",
-  as: "favouritedBy",
   onDelete: "CASCADE",
 });
 
@@ -85,13 +74,35 @@ Dish.belongsTo(Restaurant, {
   as: "restaurant",
 });
 
+Restaurant.hasMany(FavouriteRestaurant, {
+  foreignKey: "restaurant_id",
+  as: "favouritedBy",
+  onDelete: "CASCADE",
+});
+
+FavouriteRestaurant.belongsTo(User, {
+  foreignKey: "user_id",
+  as: "user",
+  onDelete: "CASCADE",
+})
+
+User.hasMany(FavouriteRestaurant, {
+  foreignKey: "user_id",
+  as: "favouriteRestaurants",
+  onDelete: "CASCADE",
+})
+
+FavouriteRestaurant.belongsTo(Restaurant, {
+  foreignKey: "restaurant_id",
+  as: "restaurant",
+  onDelete: "CASCADE",
+})
 
 Restaurant.hasMany(Menu, {
   foreignKey: "restaurant_id",
   as: "menus",
   onDelete: "CASCADE",
 });
-
 
 Menu.belongsTo(Restaurant, {
   foreignKey: "restaurant_id",
@@ -104,18 +115,21 @@ Menu.hasMany(Attachment, {
   scope: { model_type: "Menu" },
   as: 'attachments'
 })
+
 Attachment.belongsTo(Menu, {
   foreignKey: "model_id",
   constraints: false,
   as: "menuAttachment",
   scope: { model_type: "Menu" },
 });
+
 Dish.hasMany(Attachment, {
   foreignKey: "model_id",
   constraints: false,
   scope: { model_type: "Dish" },
   as: 'attachments'
 })
+
 Attachment.belongsTo(Dish, {
   foreignKey: "model_id",
   constraints: false,
@@ -137,18 +151,6 @@ Dish.belongsToMany(Menu, {
   as: "menus",
 });
 
-FavouriteRestaurant.belongsTo(User, {
-  foreignKey: "user_id",
-  as: "user",
-  onDelete: "CASCADE",
-})
-
-FavouriteRestaurant.belongsTo(Restaurant, {
-  foreignKey: "restaurant_id",
-  as: "restaurant",
-  onDelete: "CASCADE",
-})
-
 MenuRestaurantStats.belongsTo(Restaurant, {
   foreignKey: 'model_id',
   constraints: false,
@@ -161,18 +163,13 @@ MenuRestaurantStats.belongsTo(Menu, {
   as: 'menu'
 });
 
-Newsletter.belongsToMany(Restaurant, {
-  through: NewsletterRestaurants,
-  foreignKey: 'newsletter_id',
-  otherKey: 'restaurant_id',
-  as: 'restaurants'
-})
+Newsletter.belongsTo(Restaurant, {
+  foreignKey: "restaurant_id",
+  onDelete: "CASCADE",
+});
 
-Restaurant.belongsToMany(Newsletter, {
-  through: NewsletterRestaurants,
-  foreignKey: 'restaurant_id',
-  otherKey: 'newsletter_id',
-  as: 'newsletters'
+Restaurant.hasMany(Newsletter, {
+  foreignKey: "restaurant_id",
 });
 
 Newsletter.hasMany(NewsletterRecipient, {
@@ -187,20 +184,24 @@ NewsletterRecipient.belongsTo(Newsletter, {
 NewsletterRecipient.belongsTo(User, {
   foreignKey: 'user_id'
 });
+
+NewsletterRecipient.belongsTo(Restaurant, {
+  foreignKey: 'restaurant_id'
+});
+
 Newsletter.hasMany(Attachment, {
   foreignKey: "model_id",
   constraints: false,
   scope: { model_type: "Newsletter" },
   as: 'attachments'
 });
+
 Attachment.belongsTo(Newsletter, {
   foreignKey: "model_id",
   constraints: false,
   as: "newsLetterAttachment",
   scope: { model_type: "Newsletter" },
 });
-
-
 
 module.exports = {
   sequelize,

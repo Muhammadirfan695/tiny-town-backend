@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.post(
     "/newsletter",
-    upload.single("image"),
+    upload.array("files"),
     apiKeyAuth,
     authorize("Admin"),
     createNewsletterValidation,
@@ -19,7 +19,7 @@ router.post(
 );
 router.patch(
     "/newsletter",
-    upload.single("image"),
+    upload.array("files"),
     apiKeyAuth,
     authorize("Admin"),
     createNewsletterValidation,
