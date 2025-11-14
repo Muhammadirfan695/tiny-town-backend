@@ -278,7 +278,15 @@ const getAllDishesService = async (filters = {}, pagination = {}, userId, userRo
       DishModel = Dish.scope({ method: ["byManager", userId] });
     }
   }
-
+  let RestaurantModel = Restaurant;
+  if (userRole) {
+    if (userRole === "Owner") {
+      RestaurantModel = Restaurant.scope({ method: ["byOwner", userId] });
+    } else if (userRole === "Manager") {
+      RestaurantModel = Restaurant.scope({ method: ["byManager", userId] });
+    }
+  }
+  const allResturant = await RestaurantModel.findAll()
   const { rows, count } = await DishModel.findAndCountAll({
     where,
     include,
@@ -292,6 +300,7 @@ const getAllDishesService = async (filters = {}, pagination = {}, userId, userRo
     "Dishes fetched successfully",
     {
       data: {
+        allResturant:allResturant,
         dishes: rows,
         total: count,
         page,

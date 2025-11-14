@@ -188,7 +188,16 @@ const getAllMenusService = async (query, userRole, userId) => {
       }
 
     }
+    let RestaurantModel = Restaurant;
+    if (userRole) {
+      if (userRole === "Owner") {
+        RestaurantModel = Restaurant.scope({ method: ["byOwner", userId] });
+      } else if (userRole === "Manager") {
+        RestaurantModel = Restaurant.scope({ method: ["byManager", userId] });
+      }
+    }
 
+    const allResturant = await RestaurantModel.findAll()
     const { count, rows } = await menuModel.findAndCountAll({
       where,
       include: [
@@ -228,7 +237,9 @@ const getAllMenusService = async (query, userRole, userId) => {
       page: parseInt(page),
       limit: parseInt(limit),
       totalPages: Math.ceil(count / limit),
+      allResturant:allResturant,
       data: rows,
+     
     });
   } catch (err) {
     console.error("Error fetching menus:", err);
