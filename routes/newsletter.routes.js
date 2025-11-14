@@ -4,7 +4,7 @@ const { apiKeyAuth, validateRequest, authorize } = require("../middleware/authMi
 
 const { upload } = require("../utils/uploadImage");
 const { createNewsletterValidation } = require("../validations/newsletter.validations");
-const { createNewsletter, updateNewsletter, getAllNewsletter, getNewsletterById, deleteNewsletterById } = require("../controllers/newsletter.controller");
+const { createNewsletter, updateNewsletter, getAllNewsletter, getNewsletterById, deleteNewsletterById, readyNewsletter } = require("../controllers/newsletter.controller");
 
 const router = express.Router();
 
@@ -43,6 +43,13 @@ router.delete(
     apiKeyAuth,
     authorize("Admin"),
     deleteNewsletterById
+);
+
+router.patch(
+    "/newsletter/:id",
+    apiKeyAuth,
+    authorize("Admin"),
+    readyNewsletter
 );
 module.exports = router;
 

@@ -50,5 +50,6 @@ module.exports = {
     updateNewsletter,
     getAllNewsletter,
     getNewsletterById,
-    deleteNewsletterById
+    deleteNewsletterById,
+    readyNewsletter
 }
