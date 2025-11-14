@@ -26,7 +26,7 @@ const protect = expressAsyncHandler(async (req, res, next) => {
         if (err.name === "TokenExpiredError") {
           return res.status(401).json({
             succeeded: false, status:401,
-            message: "Token Expired",
+            message: "Session Expired",
           });
         } else if (err.name === "JsonWebTokenError") {
           return res.status(401).json({
@@ -84,7 +84,7 @@ const authorize = (...allowedRoles) =>
           if (err.name === "TokenExpiredError") {
             return res.status(401).json({
               succeeded: false, status:401,
-              message: "Token Expired",
+              message: "Session Expired",
             });
           } else if (err.name === "JsonWebTokenError") {
             return res.status(401).json({
