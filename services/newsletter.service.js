@@ -377,7 +377,7 @@ const deleteNewsletterService = async (newsletterId) => {
             transaction,
         });
 
-        await newsletter.setRestaurants([], { transaction });
+        // await newsletter.setRestaurants([], { transaction });
 
         await newsletter.destroy({ transaction });
 
