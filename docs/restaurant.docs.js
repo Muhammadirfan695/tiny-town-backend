@@ -218,6 +218,17 @@
  *               cuisine_type:
  *                 type: string
  *                 example: "Italian"
+ *               hours:
+ *                 type: object
+ *                 description: "Opening and closing hours for each day."
+ *                 example:
+ *                   monday: { open: "11:00 AM", close: "10:00 PM" }
+ *                   tuesday: { open: "11:00 AM", close: "10:00 PM" }
+ *                   wednesday: { open: "11:00 AM", close: "10:00 PM" }
+ *                   thursday: { open: "11:00 AM", close: "10:00 PM" }
+ *                   friday: { open: "11:00 AM", close: "11:00 PM" }
+ *                   saturday: { open: "12:00 PM", close: "11:00 PM" }
+ *                   sunday: { open: "12:00 PM", close: "09:00 PM" }
  *               service_model:
  *                 type: string
  *                 description: A JSON array string (e.g., '["dine-in", "takeaway", "delivery"]').

@@ -4,7 +4,7 @@ const { sendEmail } = require("../utils/sendEmail");
 exports.sendResetOtpEmail = async (to, otp, lang = "en") => {
   const t = emailTranslations[lang]?.passwordReset || emailTranslations.en.passwordReset;
   const appLogoUrl = `${process.env.BASE_URL}public/assets/bdaybee-header-logo.svg`;
-  console.log("appLogoUrl", appLogoUrl)
+
   const htmlMessage = `
       <!DOCTYPE html>
       <html lang="${lang}">
@@ -98,7 +98,7 @@ exports.sendResetOtpEmail = async (to, otp, lang = "en") => {
 exports.sendResetOtpEmail = async (to, otp, lang = "en") => {
   const t = emailTranslations[lang]?.passwordReset || emailTranslations.en.passwordReset;
   const appLogoUrl = `${process.env.BASE_URL}public/assets/bdaybee-header-logo.svg`;
-  console.log("appLogoUrl", appLogoUrl)
+ 
   const htmlMessage = `
       <!DOCTYPE html>
       <html lang="${lang}">
@@ -194,7 +194,7 @@ exports.sendWelcomeEmailWithOtp = async (to, otp, lang) => {
   const t = emailTranslations[lang]?.welcome || emailTranslations.en.welcome;
 
   const appLogoUrl = `${process.env.BASE_URL}public/assets/bdaybee-header-logo.svg`;
-  console.log("appLogoUrl", appLogoUrl)
+
   const htmlMessage = `
       <!DOCTYPE html>
       <html lang="${lang}">

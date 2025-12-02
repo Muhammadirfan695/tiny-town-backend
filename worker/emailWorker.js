@@ -18,7 +18,6 @@ const worker = new Worker(
     "sendEmailToRecipient",
     async (job) => {
         const { recipient, newsletter } = job.data;
-        console.log("{ where: { id: recipient.id }}", recipient, newsletter)
         try {
             await sendNewsletter(recipient, newsletter);
 

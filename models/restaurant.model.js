@@ -46,13 +46,18 @@ const Restaurant = sequelize.define(
             type: DataTypes.STRING,
             allowNull: true,
         },
-        opening_hours: {
-            type: DataTypes.STRING,
+        // opening_hours: {
+        //     type: DataTypes.STRING,
+        //     allowNull: true,
+        // },
+        // closing_hours: {
+        //     type: DataTypes.STRING,
+        //     allowNull: true,
+        // },
+        hours: {
+            type: DataTypes.JSON,
             allowNull: true,
-        },
-        closing_hours: {
-            type: DataTypes.STRING,
-            allowNull: true,
+            comment: "Opening and closing hours for each day of the week"
         },
         total_weekly_hours: {
             type: DataTypes.FLOAT,
@@ -114,12 +119,12 @@ const Restaurant = sequelize.define(
         freezeTableName: true,
         scopes: {
             byOwner(userId) {
-              return { where: { owner_id: userId } };
+                return { where: { owner_id: userId } };
             },
             byManager(userId) {
-              return { where: { manager_id: userId } };
+                return { where: { manager_id: userId } };
             },
-          },
+        },
     }
 );
 

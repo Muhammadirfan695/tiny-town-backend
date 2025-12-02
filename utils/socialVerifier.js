@@ -12,7 +12,6 @@ async function verifyGoogleToken(idToken) {
         });
 
         const payload = ticket.getPayload();
-        console.log("payload", payload)
         const [firstName, ...lastNameParts] = payload.name.split(" ");
         const lastName = lastNameParts.join(" ");
         return {

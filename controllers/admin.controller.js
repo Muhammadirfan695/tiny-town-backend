@@ -34,9 +34,6 @@ const UpdateUser = asyncHandler(async (req, res) => {
     try {
         const { id, firstName, lastName, email, roles } = req.body;
         if (!id) return handleResponse(res, error("User ID missing from token", 401));
-
-
-
         const result = await updateUserService(
             { id, firstName, lastName, email, roles },
             req.file
@@ -63,7 +60,7 @@ const getAllUsers = asyncHandler(async (req, res) => {
 const deleteUser = asyncHandler(async (req, res) => {
     try {
         const { id } = req.params;
-        const { hardDelete } = req.query;
+        const { hardDelete = true } = req.query;
 
         if (!id) {
             return handleResponse(res, error("User ID is required", 400));
@@ -99,7 +96,7 @@ const restoreUser = asyncHandler(async (req, res) => {
 const signupApprovalRejection = asyncHandler(async (req, res) => {
     const result = await approveOrRejectSignupRequestService(req.body);
     handleResponse(res, result);
-  });
+});
 
 module.exports = {
     createUser,

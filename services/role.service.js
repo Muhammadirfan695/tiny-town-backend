@@ -35,6 +35,13 @@ const getAllRoleByIds = async (roles, transaction) => {
   });
 };
 
+const getAllRoleByNames = async (roles, transaction) => {
+  return await Role.findAll({
+    where: { name: roles },
+    transaction,
+  });
+};
+
 const removeUserRole = async (userId, roleIds = null, transaction = null) => {
   const where = { user_id: userId };
   if (roleIds) {
@@ -54,5 +61,6 @@ module.exports = {
   getRoleByName,
   getAllRoleByIds,
   removeUserRole,
-  getAllUserRolesById
+  getAllUserRolesById,
+  getAllRoleByNames
 }

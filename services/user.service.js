@@ -5,7 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 const { error, success } = require("../helpers/response.helper");
 const { sendOTPtoResetPassword, sendOTPtoVerify } = require("./email.service");
 const { findOneAttachment, createAttachment, deleteAttachment, findAllAttachments } = require("./attachment.service");
-const { removeUserRole, getAllRoleByIds } = require("./role.service");
+const { removeUserRole, getAllRoleByIds, getAllRoleByNames } = require("./role.service");
 
 
 
@@ -222,8 +222,9 @@ const getAllUsersService = async (query) => {
     const where = {};
 
     if (status) where.status = status;
-    if (verified !== undefined)
+    if (verified !== undefined) {
       where.verified = verified === "true" || verified === true;
+    }
     // if (firstName)
     //   where.firstName = { [Op.iLike]: `%${firstName.trim()}%` };
     // if (lastName)
@@ -240,8 +241,9 @@ const getAllUsersService = async (query) => {
       ];
     }
 
-    if (email)
+    if (email) {
       where.email = { [Op.iLike]: `%${email.trim()}%` };
+    }
 
     let paranoid = true;
     if (deleted === "true" || deleted === true) {
@@ -270,21 +272,48 @@ const getAllUsersService = async (query) => {
       paranoid,
       transaction,
     });
-
-    const filteredUsers = usersWithRoles.filter(user => {
-      const roleNames = user.Roles.map(r => r.name.toLowerCase());
-      return !(roleNames.length === 1 && roleNames[0] === "admin");
+    const { rows: users, count: total } = await User.findAndCountAll({
+      where,
+      include: [
+        {
+          model: Role,
+          as: "Roles",
+          attributes: ["name"],
+          through: { attributes: [] },
+          where: { name: { [Op.not]: "Admin" } },
+          required: false
+        },
+      ],
+      attributes: {
+        exclude: [
+          "password",
+          "resetPasswordToken",
+          "resetPasswordExpire",
+          "otp",
+          "otpExpires",
+          "magicLoginToken",
+          "magicLoginTokenExpires",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      offset,
+      limit,
+      paranoid,
+      distinct: true,
+      transaction,
     });
+
 
     await transaction.commit();
 
     return success("Users fetched successfully", {
       data: {
-        users: filteredUsers,
-        total: filteredUsers.length,
+        users: users,
+        total: total,
         page,
         limit,
-        totalPages: Math.ceil(filteredUsers.length / limit),
+        totalPages: Math.ceil(total / limit),
       },
     });
   } catch (err) {
@@ -320,7 +349,7 @@ const deleteUserService = async (userId, { hardDelete = true } = {}) => {
         manager_id: sequelize.literal(`CASE WHEN manager_id='${userId}' THEN NULL ELSE manager_id END`),
       },
       {
-        where: { [sequelize.Op.or]: [{ owner_id: userId }, { manager_id: userId }] },
+        where: { [Op.or]: [{ owner_id: userId }, { manager_id: userId }] },
         transaction,
       }
     );
@@ -397,7 +426,7 @@ const updateUserProfileService = async (data, file = null) => {
     }
 
     const { roles, email, ...userData } = data;
- 
+
     if (user.provider === "local") {
       if (email && email !== user.email) {
         userData.email = email;
@@ -431,7 +460,7 @@ const updateUserProfileService = async (data, file = null) => {
       const existingAvatar = await findOneAttachment(user.id, "User", "avatar", transaction);
       if (existingAvatar) {
         await deleteAttachment(existingAvatar, transaction);
-      } 
+      }
       await createAttachment(
         user.id,
         "User",
@@ -486,22 +515,24 @@ const updateUserService = async (data, file = null) => {
       delete userData.email;
     }
 
-
     await User.update(userData, { where: { id }, transaction })
 
     if (roles && (Array.isArray(roles) || typeof roles === "string")) {
       const roleIds = Array.isArray(roles)
         ? roles
         : roles.split(",").map((r) => r.trim());
-      const existingRoles = await getAllRoleByIds(roleIds, transaction);
-
+      const existingRoles = await getAllRoleByNames(roleIds, transaction);
       if (existingRoles.length !== roleIds.length) {
         await transaction.rollback();
         return error("One or more roles are invalid", 400);
       }
 
       const updatedUserInstance = await findUserById(id, transaction);
-      await updatedUserInstance.setRoles(roleIds, { transaction });
+      // await updatedUserInstance.setRoles(roleIds, { transaction });
+      await updatedUserInstance.setRoles(
+        existingRoles.map((r) => r.id),
+        { transaction }
+      );
     }
 
     if (file) {

@@ -645,6 +645,7 @@
  *       - Assigns an owner and a manager using their existing User IDs.
  *       - Uploads a logo and a header image.
  *       - **Important:** For `service_model`, provide a valid JSON array as a single string.
+ *       - **Hours:** Provide a JSON object representing opening and closing times for each day.
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
@@ -671,12 +672,17 @@
  *               phone_number:
  *                 type: string
  *                 example: "+92-300-1234567"
- *               opening_hours:
- *                 type: string
- *                 example: "11:00 AM"
- *               closing_hours:
- *                 type: string
- *                 example: "12:00 AM"
+ *               hours:
+ *                 type: object
+ *                 description: "Opening and closing hours for each day."
+ *                 example:
+ *                   monday: { open: "11:00 AM", close: "10:00 PM" }
+ *                   tuesday: { open: "11:00 AM", close: "10:00 PM" }
+ *                   wednesday: { open: "11:00 AM", close: "10:00 PM" }
+ *                   thursday: { open: "11:00 AM", close: "10:00 PM" }
+ *                   friday: { open: "11:00 AM", close: "11:00 PM" }
+ *                   saturday: { open: "12:00 PM", close: "11:00 PM" }
+ *                   sunday: { open: "12:00 PM", close: "09:00 PM" }
  *               contact_email:
  *                 type: string
  *                 format: email
@@ -744,7 +750,7 @@
  *             schema:
  *               $ref: '#/components/schemas/Restaurant'
  *       400:
- *         description: Bad Request (e.g., invalid coordinates or invalid tags format).
+ *         description: Bad Request (e.g., invalid coordinates, invalid tags, or invalid hours format).
  *         content:
  *           application/json:
  *             schema:
@@ -1002,6 +1008,17 @@
  *               cuisine_type:
  *                 type: string
  *                 example: "Italian"
+ *               hours:
+ *                 type: object
+ *                 description: "Opening and closing hours for each day."
+ *                 example:
+ *                   monday: { open: "11:00 AM", close: "10:00 PM" }
+ *                   tuesday: { open: "11:00 AM", close: "10:00 PM" }
+ *                   wednesday: { open: "11:00 AM", close: "10:00 PM" }
+ *                   thursday: { open: "11:00 AM", close: "10:00 PM" }
+ *                   friday: { open: "11:00 AM", close: "11:00 PM" }
+ *                   saturday: { open: "12:00 PM", close: "11:00 PM" }
+ *                   sunday: { open: "12:00 PM", close: "09:00 PM" }
  *               service_model:
  *                 type: string
  *                 description: A JSON array string (e.g., '["dine-in", "takeaway", "delivery"]').

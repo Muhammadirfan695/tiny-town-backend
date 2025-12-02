@@ -19,6 +19,7 @@ const createRestaurantService = async (data, files) => {
       total_weekly_hours,
       website,
       postal_code,
+      hours,
       tags, ...restaurantData } = data;
     if (owner_id) {
       const owner = await User.findByPk(owner_id);
@@ -54,6 +55,18 @@ const createRestaurantService = async (data, files) => {
         return error("Tags must be an array or comma-separated string", 400);
       }
     }
+    if (hours) {
+      if (typeof hours === "string") {
+        try {
+          hours = JSON.parse(hours);
+        } catch {
+          return error("Hours must be a valid JSON object", 400);
+        }
+      }
+      if (typeof hours !== "object" || Array.isArray(hours)) {
+        return error("Hours must be a JSON object with days and open/close times", 400);
+      }
+    }
     const parsedLatitude = parseFloat(latitude);
     const parsedLongitude = parseFloat(longitude);
     const newRestaurant = await Restaurant.create(
@@ -66,7 +79,7 @@ const createRestaurantService = async (data, files) => {
         total_weekly_hours: total_weekly_hours || null,
         website,
         postal_code,
-
+        hours: hours || null,
         latitude: !isNaN(parsedLatitude) ? parsedLatitude : null,
         longitude: !isNaN(parsedLongitude) ? parsedLongitude : null,
         tags: tags?.length ? tags : null,
@@ -171,12 +184,27 @@ const getAllRestaurantsService = async (query, userId, userRole) => {
       const tagArray = tags.split(",");
       whereClause.tags = { [Op.overlap]: tagArray };
     }
+    // if (openToday === "true") {
+    //   const now = new Date();
+    //   const currentTime = now.toTimeString().slice(0, 5);
+    //   whereClause.opening_hours = { [Op.lte]: currentTime };
+    //   whereClause.closing_hours = { [Op.gte]: currentTime };
+    // }
+
+    let filterByOpenToday = false;
+    let todayKey = null;
+
     if (openToday === "true") {
-      const now = new Date();
-      const currentTime = now.toTimeString().slice(0, 5);
-      whereClause.opening_hours = { [Op.lte]: currentTime };
-      whereClause.closing_hours = { [Op.gte]: currentTime };
+      filterByOpenToday = true;
+
+      const today = new Date();
+      const weekdays = [
+        "sunday", "monday", "tuesday", "wednesday",
+        "thursday", "friday", "saturday"
+      ];
+      todayKey = weekdays[today.getDay()];
     }
+
     let restaurants, count;
 
     if (lat && lng) {
@@ -427,12 +455,45 @@ const updateRestaurantService = async (id, data, files, userRole, userId) => {
         return error("Invalid JSON format for service_model", 400);
       }
     }
+
+    if (data.hours) {
+      try {
+        if (typeof data.hours === "string") {
+          data.hours = JSON.parse(data.hours);
+        }
+
+        if (typeof data.hours !== "object" || Array.isArray(data.hours)) {
+          await transaction.rollback();
+          return error("Invalid hours format: must be an object", 400);
+        }
+
+        for (const [day, schedule] of Object.entries(data.hours)) {
+          if (
+            !schedule ||
+            typeof schedule !== "object" ||
+            !schedule.open ||
+            !schedule.close
+          ) {
+            await transaction.rollback();
+            return error(
+              `Invalid hours format for '${day}'. Format must be: { open: 'HH:MM', close: 'HH:MM' }`,
+              400
+            );
+          }
+        }
+      } catch (err) {
+        await transaction.rollback();
+        return error("Invalid JSON format for hours", 400);
+      }
+    } else {
+      data.hours = null;
+    }
     const parsedLatitude = parseFloat(latitude);
     const parsedLongitude = parseFloat(longitude);
     await restaurant.update(
       {
         ...data,
-
+        hours: data.hours || null,
         latitude: !isNaN(parsedLatitude) ? parsedLatitude : null,
         longitude: !isNaN(parsedLongitude) ? parsedLongitude : null,
         tags: data.tags?.length ? data.tags : null,
