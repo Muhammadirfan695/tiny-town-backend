@@ -279,8 +279,6 @@ const createUserService = async (data) => {
   }
 };
 
-
-
 const createUserByRoleService = async (data) => {
   try {
     const { firstName, lastName, email, password, role } = data;
