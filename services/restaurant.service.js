@@ -55,18 +55,58 @@ const createRestaurantService = async (data, files) => {
         return error("Tags must be an array or comma-separated string", 400);
       }
     }
-    if (hours) {
-      if (typeof hours === "string") {
-        try {
-          hours = JSON.parse(hours);
-        } catch {
-          return error("Hours must be a valid JSON object", 400);
-        }
-      }
-      if (typeof hours !== "object" || Array.isArray(hours)) {
-        return error("Hours must be a JSON object with days and open/close times", 400);
-      }
+    // if (hours) {
+    //   if (typeof hours === "string") {
+    //     try {
+    //       hours = JSON.parse(hours);
+    //     } catch {
+    //       return error("Hours must be a valid JSON object", 400);
+    //     }
+    //   }
+    //   if (typeof hours !== "object" || Array.isArray(hours)) {
+    //     return error("Hours must be a JSON object with days and open/close times", 400);
+    //   }
+    // }
+// Parse & Validate hours input
+
+
+
+if (hours) {
+  if (typeof hours === "string") {
+    try {
+      hours = JSON.parse(hours);
+    } catch {
+      return error("Hours must be a valid JSON object", 400);
     }
+  }
+  if (typeof hours !== "object" || Array.isArray(hours)) {
+    return error("Hours must be a JSON object with days and open/close times", 400);
+  }
+
+  const days = ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"];
+  const normalizedHours = {};
+
+  days.forEach(day => {
+    let dayInfo = hours[day] || {};
+
+    dayInfo.isClosed = dayInfo.isClosed ?? false;
+
+    if (dayInfo.isClosed) {
+      dayInfo.open = null;
+      dayInfo.close = null;
+    }
+
+    normalizedHours[day] = {
+      open: dayInfo.open || null,
+      close: dayInfo.close || null,
+      isClosed: dayInfo.isClosed
+    };
+  });
+
+  hours = normalizedHours;
+}
+
+    
     const parsedLatitude = parseFloat(latitude);
     const parsedLongitude = parseFloat(longitude);
     const newRestaurant = await Restaurant.create(
