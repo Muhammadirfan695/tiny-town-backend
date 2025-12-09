@@ -47,16 +47,16 @@ console.log("🎯 Email worker started");
 
 const sendNewsletter = async (recipient, newsletter) => {
     const restaurant = newsletter.restaurant;
-
     let menusHtml = "";
-    if (restaurant && restaurant.Menus) {
-        menusHtml = restaurant.Menus.map(menu => `
+    let restaurantDetailsHtml = "";
+    if (restaurant && restaurant.menus) {
+        menusHtml = restaurant.menus.map(menu => `
             <h3>${menu.name}</h3>
             ${menu.description ? `<p>${menu.description}</p>` : ""}
             <ul>
-                ${menu.Dishes.map(dish => `
+                ${menu.dishes.map(dish => `
                     <li>
-                        <strong>${dish.name}</strong> - $${dish.price} <br/>
+                        <strong>${dish.name}</strong> <br/>
                         ${dish.description || ""}
                     </li>
                 `).join("")}
@@ -65,9 +65,32 @@ const sendNewsletter = async (recipient, newsletter) => {
     }
 
     const imagesHtml = (newsletter.image || [])
-        .map(img => `<img src="${img.url}" alt="${img.filename}" style="max-width:100%; margin-top:10px;" />`)
+        .map(img => {
+            return `<img src="${img.url}" alt="${img.filename}" style="max-width:100%; margin-top:10px;" />`;
+        })
         .join("");
-
+        if (restaurant) {
+            // Format hours
+            let hoursHtml = "";
+            if (restaurant.hours) {
+                hoursHtml = "<ul>";
+                for (const [day, time] of Object.entries(restaurant.hours)) {
+                    hoursHtml += `<li><strong>${capitalize(day)}:</strong> ${time.open} - ${time.close}</li>`;
+                }
+                hoursHtml += "</ul>";
+            }
+    
+            restaurantDetailsHtml = `
+                <h2>${restaurant.name}</h2>
+                ${restaurant.description ? `<p>${restaurant.description}</p>` : ""}
+                <p>
+                    <strong>Address:</strong> ${restaurant.address || ""}, ${restaurant.city || ""}, ${restaurant.country || ""}
+                </p>
+                <h3>Operating Hours</h3>
+                ${hoursHtml}
+            `;
+        }
+    
     const htmlMessage = `
     <!DOCTYPE html>
     <html>
@@ -87,9 +110,13 @@ const sendNewsletter = async (recipient, newsletter) => {
     <body>
         <div class="container">
             <h2>${newsletter.title}</h2>
+            <h2> Restaurant </h2>
+            ${restaurantDetailsHtml}
+            <h2> Menu </h2>
+            ${menusHtml}
             ${newsletter.content}
             ${imagesHtml}
-            ${menusHtml}
+          
             <div class="footer">You received this email because you subscribed to our newsletter.</div>
         </div>
     </body>
@@ -105,3 +132,7 @@ const sendNewsletter = async (recipient, newsletter) => {
 };
 
 
+function capitalize(str) {
+    if (!str) return "";
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}

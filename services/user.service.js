@@ -533,6 +533,16 @@ const updateUserService = async (data, file = null) => {
         existingRoles.map((r) => r.id),
         { transaction }
       );
+      await Restaurant.update(
+        {
+          owner_id: sequelize.literal(`CASE WHEN owner_id='${id}' THEN NULL ELSE owner_id END`),
+          manager_id: sequelize.literal(`CASE WHEN manager_id='${id}' THEN NULL ELSE manager_id END`),
+        },
+        {
+          where: { [Op.or]: [{ owner_id: id }, { manager_id: id }] },
+          transaction,
+        }
+      );
     }
 
     if (file) {

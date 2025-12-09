@@ -246,14 +246,23 @@ const changeNewsletterStatusService = async (newsletterId, newStatus) => {
             });
 
             const attachments = await findAllAttachments(newsletter.id, "Newsletter");
-            const newsletterImages = attachments.map(att => ({
-                url: att.path,
-                filename: att.filename
-            }));
+            // const newsletterImages = attachments.map(att => ({
+            //     url: att.path,
+            //     filename: att.filename
+            // }));
+            const host_url = process.env.BASE_URL
+            const newsletterImages = attachments.map(att => {
+              
+
+                return {
+                    url: `${host_url}${att.image_path}`,
+                    filename: att.image_name
+                };
+            });
             let restaurantData = null;
             if (newsletter.restaurant_id) {
                 restaurantData = await Restaurant.findByPk(newsletter.restaurant_id, {
-                    attributes: ["id", "name", "description"],
+                    attributes: ["id", "name", "description","address","country","city","hours"],
                     include: [
                         {
                             model: Menu,
