@@ -19,6 +19,7 @@ const sendEmail = async (options) => {
         subject: options.subject,
         text: options.message,
         html: options.html,
+        encoding: "utf-8",
     };
 
     await transporter.sendMail(mailOptions);
