@@ -30,7 +30,8 @@ const updateRestaurant = asyncHandler(async (req, res) => {
     id,
     req.body,
     req.files,
-    req.userRole
+    req.userRole,
+    req.userId
   );
   handleResponse(res, result);
 });
