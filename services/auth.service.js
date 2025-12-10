@@ -58,11 +58,22 @@ loginService = async (email, password) => {
       return error("User is Not Active", 403);
     }
 
+
+    const roleNames = await getAllUserRolesById(user.id);
+
+    if (!roleNames || roleNames.length === 0) {
+      return error("User has no assigned role.", 500);
+    }
+    const hasAdminRole = roleNames.some(role => role.toLowerCase() === "admin");
+    if (!hasAdminRole) {
+      return error("Access Denied. Only admin users can login.", 403);
+    }
+
     const match = await verifyPassword(password, user.password);
     if (!match) {
       return error("Invalid Credentials", 404);
     }
-    const roleNames = await getAllUserRolesById(user.id);
+
 
 
     const primaryRole = roleNames?.[0];
@@ -94,10 +105,11 @@ const loginMagicLink = async (email) => {
     return error("Email is Required", 400);
   }
   const sanitizedEmail = email.trim().toLowerCase();
+  console.log("sanitizedEmail", sanitizedEmail)
   const user = await User.findOne({
     where: { email: sanitizedEmail },
     attributes: { exclude: ["createdAt", "updatedAt"] },
-     });
+  });
   if (!user) {
     return error("Invalid Credentials", 404);
   }
@@ -337,8 +349,8 @@ const approveOrRejectSignupRequestService = async (body, reason) => {
       const role = await getRoleByName(request.role);
       if (!role) {
         return error(`Role "${request.role}" does not exist`, 400);
-      } 
-      
+      }
+
       await assignRole(user.id, role.id, transaction);
       await transaction.commit();
 

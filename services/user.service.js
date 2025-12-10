@@ -49,7 +49,7 @@ const generateMagicToken = async (email) => {
     return error("Invalid Credentials", 404);
   }
   const token = uuidv4();
-  const expires = new Date(Date.now() + 10 * 60 * 1000);
+  const expires = new Date(Date.now() + 30 * 60 * 1000);
 
   user.magicLoginToken = token;
   user.magicLoginTokenExpires = expires;
@@ -135,14 +135,6 @@ const createUser = async (data, transaction) => {
 };
 
 
-
-
-
-
-
-
-
-
 exports.findByProvider = async (provider, providerId) => {
   if (!provider || !providerId) return null;
 
@@ -167,13 +159,6 @@ exports.updateUserVerificationToken = async (user, otp, expires, transaction) =>
     { transaction }
   );
 };
-
-
-
-
-
-
-
 
 
 const findAllAndCountUser = async (

@@ -374,11 +374,13 @@ const updateRestaurantService = async (id, data, files, userRole, userId) => {
       if (userRole === "Owner") {
         RestaurantModel = Restaurant.scope({ method: ["byOwner", userId] });
       } else if (userRole === "Manager") {
+        console.log("hereeee",userId)
         RestaurantModel = Restaurant.scope({ method: ["byManager", userId] });
       }
     }
 
     const restaurant = await RestaurantModel.findByPk(id, { transaction });
+    console.log("dogobasy@mailinator.com",restaurant)
     if (!restaurant) {
       await transaction.rollback();
       return error("Restaurant not found", 404);
@@ -390,14 +392,19 @@ const updateRestaurantService = async (id, data, files, userRole, userId) => {
       }
     });
 
-    if ((data.owner_id || data.manager_id) && userRole !== "Admin") {
-      await transaction.rollback();
-      return error(
-        "Forbidden: Only an Admin can change the owner or manager.",
-        403
-      );
+    if (
+      (data.owner_id !== undefined && data.owner_id !== restaurant.owner_id) ||
+      (data.manager_id !== undefined && data.manager_id !== restaurant.manager_id)
+    ) {
+      if (userRole !== "Admin") {
+        await transaction.rollback();
+        return error(
+          "Forbidden: Only an Admin can change the owner or manager.",
+          403
+        );
+      }
     }
-
+    
     if (data.owner_id && userRole === "Admin") {
       const newOwner = await User.findByPk(data.owner_id);
       if (!newOwner) {
