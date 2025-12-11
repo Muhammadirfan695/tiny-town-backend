@@ -1,16 +1,26 @@
 const { Op } = require("sequelize");
-const { Restaurant, User, sequelize, MenuRestaurantStats } = require("../models");
+const {
+  Restaurant,
+  User,
+  sequelize,
+  MenuRestaurantStats,
+} = require("../models");
 const { success, error } = require("../helpers/response.helper");
-const { createAttachment, deleteAttachment, findAllAttachments, findOneAttachment } = require("./attachment.service");
+const {
+  createAttachment,
+  deleteAttachment,
+  findAllAttachments,
+  findOneAttachment,
+} = require("./attachment.service");
 const { generateRestaurantQRCodes } = require("./qrCode.service");
 const fs = require("fs");
 const path = require("path");
 
-
 const createRestaurantService = async (data, files) => {
   const transaction = await sequelize.transaction();
   try {
-    let { owner_id,
+    let {
+      owner_id,
       manager_id,
       country,
       city,
@@ -20,7 +30,9 @@ const createRestaurantService = async (data, files) => {
       website,
       postal_code,
       hours,
-      tags, ...restaurantData } = data;
+      tags,
+      ...restaurantData
+    } = data;
     if (owner_id) {
       const owner = await User.findByPk(owner_id);
       if (!owner) return error("Owner not found", 404);
@@ -33,7 +45,6 @@ const createRestaurantService = async (data, files) => {
       }
     }
 
-
     if (manager_id) {
       const manager = await User.findByPk(manager_id);
       if (!manager) return error("Manager not found", 404);
@@ -42,7 +53,10 @@ const createRestaurantService = async (data, files) => {
     if (latitude && (isNaN(latitude) || latitude < -90 || latitude > 90)) {
       return error("Invalid latitude value", 400);
     }
-    if (longitude && (isNaN(longitude) || longitude < -180 || longitude > 180)) {
+    if (
+      longitude &&
+      (isNaN(longitude) || longitude < -180 || longitude > 180)
+    ) {
       return error("Invalid longitude value", 400);
     }
     if (tags) {
@@ -55,7 +69,7 @@ const createRestaurantService = async (data, files) => {
         return error("Tags must be an array or comma-separated string", 400);
       }
     }
-    
+
     if (hours) {
       if (typeof hours === "string") {
         try {
@@ -65,13 +79,24 @@ const createRestaurantService = async (data, files) => {
         }
       }
       if (typeof hours !== "object" || Array.isArray(hours)) {
-        return error("Hours must be a JSON object with days and open/close times", 400);
+        return error(
+          "Hours must be a JSON object with days and open/close times",
+          400
+        );
       }
 
-      const days = ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"];
+      const days = [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+      ];
       const normalizedHours = {};
 
-      days.forEach(day => {
+      days.forEach((day) => {
         let dayInfo = hours[day] || {};
 
         dayInfo.isClosed = dayInfo.isClosed ?? false;
@@ -84,13 +109,13 @@ const createRestaurantService = async (data, files) => {
         normalizedHours[day] = {
           open: dayInfo.open || null,
           close: dayInfo.close || null,
-          isClosed: dayInfo.isClosed
+          isClosed: dayInfo.isClosed,
         };
       });
 
       hours = normalizedHours;
     }
-    
+
     const parsedLatitude = parseFloat(latitude);
     const parsedLongitude = parseFloat(longitude);
     const newRestaurant = await Restaurant.create(
@@ -136,8 +161,6 @@ const createRestaurantService = async (data, files) => {
 
     const qrFiles = await generateRestaurantQRCodes(newRestaurant.id);
 
-
-
     await newRestaurant.update(
       { qr_normal: qrFiles.normal, qr_light: qrFiles.light },
       { transaction }
@@ -155,7 +178,6 @@ const createRestaurantService = async (data, files) => {
   }
 };
 
-
 const getAllRestaurantsService = async (query, userId, userRole) => {
   try {
     const {
@@ -171,10 +193,10 @@ const getAllRestaurantsService = async (query, userId, userRole) => {
       lat,
       lng,
       maxDistance = 10,
-      openToday, } = query;
+      openToday,
+    } = query;
     const offset = (page - 1) * limit;
     let RestaurantModel = Restaurant;
-
 
     if (userRole) {
       if (userRole === "Owner") {
@@ -182,7 +204,6 @@ const getAllRestaurantsService = async (query, userId, userRole) => {
       } else if (userRole === "Manager") {
         RestaurantModel = Restaurant.scope({ method: ["byManager", userId] });
       }
-
     }
     const whereClause = {};
 
@@ -223,8 +244,13 @@ const getAllRestaurantsService = async (query, userId, userRole) => {
 
       const today = new Date();
       const weekdays = [
-        "sunday", "monday", "tuesday", "wednesday",
-        "thursday", "friday", "saturday"
+        "sunday",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
       ];
       todayKey = weekdays[today.getDay()];
     }
@@ -271,7 +297,6 @@ const getAllRestaurantsService = async (query, userId, userRole) => {
       count = result.count.length || result.count;
       restaurants = result.rows;
     } else {
-
       const result = await RestaurantModel.findAndCountAll({
         where: whereClause,
         limit: parseInt(limit),
@@ -302,7 +327,6 @@ const getAllRestaurantsService = async (query, userId, userRole) => {
     if (restaurants && restaurants.length > 0) {
       const type = "restaurant";
 
-
       for (const restaurant of restaurants) {
         const model_id = restaurant.id;
 
@@ -321,8 +345,6 @@ const getAllRestaurantsService = async (query, userId, userRole) => {
         }
       }
     }
-
-
 
     return success("Restaurants fetched successfully", {
       data: {
@@ -398,13 +420,13 @@ const updateRestaurantService = async (id, data, files, userRole, userId) => {
       if (userRole === "Owner") {
         RestaurantModel = Restaurant.scope({ method: ["byOwner", userId] });
       } else if (userRole === "Manager") {
-        console.log("hereeee",userId)
+        console.log("hereeee", userId);
         RestaurantModel = Restaurant.scope({ method: ["byManager", userId] });
       }
     }
 
     const restaurant = await RestaurantModel.findByPk(id, { transaction });
-    console.log("dogobasy@mailinator.com",restaurant)
+    console.log("dogobasy@mailinator.com", restaurant);
     if (!restaurant) {
       await transaction.rollback();
       return error("Restaurant not found", 404);
@@ -418,7 +440,8 @@ const updateRestaurantService = async (id, data, files, userRole, userId) => {
 
     if (
       (data.owner_id !== undefined && data.owner_id !== restaurant.owner_id) ||
-      (data.manager_id !== undefined && data.manager_id !== restaurant.manager_id)
+      (data.manager_id !== undefined &&
+        data.manager_id !== restaurant.manager_id)
     ) {
       if (userRole !== "Admin") {
         await transaction.rollback();
@@ -428,7 +451,7 @@ const updateRestaurantService = async (id, data, files, userRole, userId) => {
         );
       }
     }
-    
+
     if (data.owner_id && userRole === "Admin") {
       const newOwner = await User.findByPk(data.owner_id);
       if (!newOwner) {
@@ -495,30 +518,50 @@ const updateRestaurantService = async (id, data, files, userRole, userId) => {
 
         if (typeof data.hours !== "object" || Array.isArray(data.hours)) {
           await transaction.rollback();
-          return error("Invalid hours format: must be an object", 400);
+          return error(
+            "Hours must be a JSON object with days and open/close times",
+            400
+          );
         }
 
-        for (const [day, schedule] of Object.entries(data.hours)) {
-          if (
-            !schedule ||
-            typeof schedule !== "object" ||
-            !schedule.open ||
-            !schedule.close
-          ) {
-            await transaction.rollback();
-            return error(
-              `Invalid hours format for '${day}'. Format must be: { open: 'HH:MM', close: 'HH:MM' }`,
-              400
-            );
+        const days = [
+          "monday",
+          "tuesday",
+          "wednesday",
+          "thursday",
+          "friday",
+          "saturday",
+          "sunday",
+        ];
+
+        const normalizedHours = {};
+
+        days.forEach((day) => {
+          let dayInfo = data.hours[day] || {};
+
+          dayInfo.isClosed = dayInfo.isClosed ?? false;
+
+          if (dayInfo.isClosed) {
+            dayInfo.open = null;
+            dayInfo.close = null;
           }
-        }
+
+          normalizedHours[day] = {
+            open: dayInfo.open || null,
+            close: dayInfo.close || null,
+            isClosed: dayInfo.isClosed,
+          };
+        });
+
+        data.hours = normalizedHours;
       } catch (err) {
         await transaction.rollback();
-        return error("Invalid JSON format for hours", 400);
+        return error("Invalid JSON for hours", 400);
       }
     } else {
       data.hours = null;
     }
+
     const parsedLatitude = parseFloat(latitude);
     const parsedLongitude = parseFloat(longitude);
     await restaurant.update(
@@ -536,7 +579,12 @@ const updateRestaurantService = async (id, data, files, userRole, userId) => {
     );
 
     if (files?.logo) {
-      const oldLogo = await findOneAttachment(id, "Restaurant", "logo", transaction);
+      const oldLogo = await findOneAttachment(
+        id,
+        "Restaurant",
+        "logo",
+        transaction
+      );
       if (oldLogo) await deleteAttachment(oldLogo, transaction);
       await createAttachment(
         id,
@@ -549,7 +597,12 @@ const updateRestaurantService = async (id, data, files, userRole, userId) => {
     }
 
     if (files?.header_image) {
-      const oldHeader = await findOneAttachment(id, "Restaurant", "header_image", transaction);
+      const oldHeader = await findOneAttachment(
+        id,
+        "Restaurant",
+        "header_image",
+        transaction
+      );
       if (oldHeader) await deleteAttachment(oldHeader, transaction);
       await createAttachment(
         id,
@@ -574,7 +627,6 @@ const updateRestaurantService = async (id, data, files, userRole, userId) => {
     return error("Failed to update restaurant", 500);
   }
 };
-
 
 const deleteRestaurantService = async (id, userId, userRole) => {
   const transaction = await sequelize.transaction();
