@@ -158,7 +158,7 @@ const loginWithMagicLink = async (token) => {
       return error("User has no assigned role.", 500);
     }
 
-    const authToken = createAuthToken(user.id, primaryRole);
+    const authToken = createAuthToken(user.id, primaryRole,'1h');
 
     const { password: _, ...userData } = user.toJSON();
 

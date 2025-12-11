@@ -5,8 +5,8 @@ const verifyPassword = async (plain, hash) => {
   return bcrypt.compare(plain, hash);
 };
 
-const createAuthToken = (userId, role) => {
-  return generateToken(userId, role);
+const createAuthToken = (userId, role, tokenTime = '1d' ) => {
+  return generateToken(userId, role, tokenTime);
 };
 
 const generateMagicLink = (token) => {
