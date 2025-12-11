@@ -37,12 +37,16 @@ const Dish = sequelize.define(
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
+    cuisine_type: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     restaurant_id: {
       type: DataTypes.UUID,
       allowNull: true,
       references: {
-        model: 'Restaurant',
-        key: 'id'
+        model: "Restaurant",
+        key: "id",
       },
       onDelete: "CASCADE",
     },
@@ -80,7 +84,6 @@ const Dish = sequelize.define(
         };
       },
     },
-
   }
 );
 

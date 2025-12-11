@@ -8,13 +8,13 @@ const path = require("path");
 const { sequelize, initializeDatabase } = require("./config/db.js");
 const { swaggerSpec, swaggerUi } = require("./swaggerconfig.js");
 
-const authRoutes = require('./routes/auth.routes.js')
-const adminRoutes = require('./routes/admin.routes.js')
-const userRoutes = require('./routes/user.routes.js')
-const dishRoutes = require('./routes/dish.routes.js')
-const restaurantRoutes = require('./routes/restaurant.routes.js')
-const menuRoutes = require('./routes/menu.routes.js')
-const dashboardRoutes = require("./routes/dashboard.routes.js")
+const authRoutes = require("./routes/auth.routes.js");
+const adminRoutes = require("./routes/admin.routes.js");
+const userRoutes = require("./routes/user.routes.js");
+const dishRoutes = require("./routes/dish.routes.js");
+const restaurantRoutes = require("./routes/restaurant.routes.js");
+const menuRoutes = require("./routes/menu.routes.js");
+const dashboardRoutes = require("./routes/dashboard.routes.js");
 const newsletterRoutes = require("./routes/newsletter.routes.js");
 
 const app = express();
@@ -32,7 +32,12 @@ const corsOptions = {
       ? "*"
       : process.env.ALLOWED_ORIGINS.split(","),
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  allowedHeaders: ["Content-Type", "Authorization", "x-api-key", "x-api-admin-key"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "x-api-key",
+    "x-api-admin-key",
+  ],
   credentials: true,
 };
 app.use(cors(corsOptions));
@@ -61,15 +66,17 @@ app.use(
     },
   })
 );
-app.use('/qrcodes', express.static(path.join(__dirname, 'qrcodes'), {
-  setHeaders: (res) => {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-  },
-})
+app.use(
+  "/qrcodes",
+  express.static(path.join(__dirname, "qrcodes"), {
+    setHeaders: (res) => {
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    },
+  })
 );
 
-app.use('/localbites', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use("/localbites", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // ========================
 // Routes
 // ========================
@@ -87,17 +94,19 @@ app.get("/", async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Error generating PDF", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error generating PDF", error: error.message });
   }
 });
 app.use("/api/auth", authRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/user', userRoutes);
-app.use('/api/dishes', dishRoutes);
-app.use('/api/restaurants', restaurantRoutes);
-app.use('/api/menus', menuRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/dishes", dishRoutes);
+app.use("/api/restaurants", restaurantRoutes);
+app.use("/api/menus", menuRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-app.use('/api/newsletters', newsletterRoutes);
+app.use("/api/newsletters", newsletterRoutes);
 // ========================
 // Database & Server Start
 // ========================
@@ -109,7 +118,9 @@ const startServer = async () => {
     const HOST = process.env.HOST || "0.0.0.0";
 
     app.listen(PORT, HOST, () => {
-      console.log(`✅ Server running at http://${HOST}:${PORT} in ${process.env.NODE_ENV} mode`);
+      console.log(
+        `✅ Server running at http://${HOST}:${PORT} in ${process.env.NODE_ENV} mode`
+      );
     });
   } catch (error) {
     console.error("❌ Failed to start server:", error.message);
