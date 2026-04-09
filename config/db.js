@@ -9,18 +9,19 @@ const sequelize = new Sequelize(
     host: process.env.DB_HOST,
     port: process.env.DB_PORT || 5432,
     dialect: 'postgres',
-    logging: process.env.NODE_ENV === 'development' ? console.log : false,
+    logging: false, 
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false 
+      }
+    },
     pool: {
-      max: 10,
+      max: 5,
       min: 0,
       acquire: 30000,
-      idle: 10000,
-    },
-    dialectOptions: {
-      ssl: process.env.DB_SSL === 'true'
-        ? { require: true, rejectUnauthorized: false }
-        : false,
-    },
+      idle: 10000
+    }
   }
 );
 
@@ -28,16 +29,10 @@ const initializeDatabase = async () => {
   try {
     await sequelize.authenticate();
     console.log('✅ PostgreSQL connected successfully');
-
-    if (process.env.NODE_ENV === 'development' && process.env.DB_SYNC === 'true') {
-      // await sequelize.sync({ force: true }); 
-      console.log('✅ Database FORCED sync complete. Tables recreated.');
-    }
-
     return true;
   } catch (error) {
     console.error('❌ Database connection failed:', error.message);
-    throw error;
+    return false; 
   }
 };
 
