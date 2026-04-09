@@ -1,4 +1,3 @@
-const pg = require('pg');
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
@@ -10,27 +9,27 @@ const sequelize = new Sequelize(
     host: process.env.DB_HOST,
     port: process.env.DB_PORT || 5432,
     dialect: 'postgres',
-    dialectModule: pg,
     logging: false,
     dialectOptions: {
       ssl: {
-        require: process.env.DB_SSL === 'true',
+        require: process.env.DB_SSL === 'true' ? true : false,
         rejectUnauthorized: false 
       }
     },
     pool: {
-      max: 5,
+      max: 3,
       min: 0,
-      acquire: 10000,
-      idle: 5000
+      acquire: 5000,
+      idle: 3000
     },
-    connectTimeout: 10000
+    connectTimeout: 5000,
+    acquireTimeout: 5000
   }
 );
 
 const initializeDatabase = async () => {
   try {
-    await sequelize.authenticate({ timeout: 10000 });
+    await sequelize.authenticate({ timeout: 5000 });
     console.log('✅ PostgreSQL connected successfully');
     return true;
   } catch (error) {
