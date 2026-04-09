@@ -14,22 +14,23 @@ const sequelize = new Sequelize(
     logging: false,
     dialectOptions: {
       ssl: {
-        require: true,
+        require: process.env.DB_SSL === 'true',
         rejectUnauthorized: false 
       }
     },
     pool: {
       max: 5,
       min: 0,
-      acquire: 30000,
-      idle: 10000
-    }
+      acquire: 10000,
+      idle: 5000
+    },
+    connectTimeout: 10000
   }
 );
 
 const initializeDatabase = async () => {
   try {
-    await sequelize.authenticate();
+    await sequelize.authenticate({ timeout: 10000 });
     console.log('✅ PostgreSQL connected successfully');
     return true;
   } catch (error) {

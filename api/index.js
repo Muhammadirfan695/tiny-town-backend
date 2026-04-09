@@ -128,6 +128,9 @@ const startServer = async () => {
     }
   } catch (error) {
     console.error("❌ Startup Error:", error.message);
+    if (process.env.NODE_ENV === 'production') {
+      throw error;
+    }
   }
 };
 

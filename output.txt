@@ -1,0 +1,4 @@
+[dotenv@17.2.3] injecting env (32) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+✅ PostgreSQL connected successfully
+✅ Local Server running on port 5000
