@@ -13,7 +13,7 @@ app.use(express.json({ limit: `${process.env.MAX_FILE_SIZE || 50}mb` }));
 app.use(express.urlencoded({ extended: true }));
 
 const corsOptions = {
-  origin: process.env.ALLOWED_ORIGINS === "*" ? "*" : process.env.ALLOWED_ORIGINS.split(","),
+  origin: (process.env.ALLOWED_ORIGINS && process.env.ALLOWED_ORIGINS !== "*") ? process.env.ALLOWED_ORIGINS.split(",") : "*",
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization", "x-api-key", "x-api-admin-key"],
   credentials: true,
