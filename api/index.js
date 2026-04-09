@@ -131,6 +131,10 @@ const startServer = async () => {
   }
 };
 
+// Initialize database connection
 startServer();
 
-module.exports = app;
+// Vercel serverless function handler
+module.exports = (req, res) => {
+  app(req, res);
+};
