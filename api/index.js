@@ -12,9 +12,18 @@ app.use(helmet());
 app.use(express.json({ limit: `${process.env.MAX_FILE_SIZE || 50}mb` }));
 app.use(express.urlencoded({ extended: true }));
 
+let allowedOrigins = process.env.ALLOWED_ORIGINS || "*";
+if (allowedOrigins === "*") {
+  allowedOrigins = "*";
+} else if (allowedOrigins) {
+  allowedOrigins = allowedOrigins.split(",");
+} else {
+  allowedOrigins = "*";
+}
+
 const corsOptions = {
-  origin: (process.env.ALLOWED_ORIGINS && process.env.ALLOWED_ORIGINS !== "*") ? process.env.ALLOWED_ORIGINS.split(",") : "*",
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  origin: allowedOrigins,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "x-api-key", "x-api-admin-key"],
   credentials: true,
 };
