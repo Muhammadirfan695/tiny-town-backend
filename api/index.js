@@ -5,13 +5,13 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
 const path = require("path");
-const { sequelize, initializeDatabase } = require("./config/db.js");
-const { swaggerSpec, swaggerUi } = require("./swaggerconfig.js");
+const { sequelize, initializeDatabase } = require("../config/db.js");
+const { swaggerSpec, swaggerUi } = require("../swaggerconfig.js");
 
 // ========================
 // Route Imports
 // ========================
-const tinytownRoutes = require("./routes/tinytown.routes.js"); // Active Project
+const tinytownRoutes = require("../routes/tinytown.routes.js"); // Active Project
 
 /* 
 // Commented out other project routes
@@ -65,15 +65,22 @@ app.use(
 );
 
 // Static Folders (Images/QR Codes)
-app.use(
-  "/public",
-  express.static(path.join(__dirname, "public"), {
+// app.use(
+//   "/public",
+//   express.static(path.join(__dirname, "public"), {
+//     setHeaders: (res) => {
+//       res.setHeader("Access-Control-Allow-Origin", "*");
+//       res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+//     },
+//   })
+// );
+
+app.use("/public", express.static(path.join(__dirname, "../public"), {
     setHeaders: (res) => {
       res.setHeader("Access-Control-Allow-Origin", "*");
       res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
     },
-  })
-);
+}));
 
 // Swagger Documentation
 app.use("/localbites-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
