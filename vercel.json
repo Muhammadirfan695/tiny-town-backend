@@ -3,7 +3,7 @@
   "builds": [
     {
       "src": "api/index.js",
-      "use": "@vercel/node@3.4.0"
+      "use": "@vercel/node"
     }
   ],
   "routes": [
@@ -11,6 +11,5 @@
       "src": "/(.*)",
       "dest": "api/index.js"
     }
-  ],
-  "outputDirectory": ".vercel/output"
+  ]
 }
