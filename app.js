@@ -111,25 +111,17 @@ app.use("/api/newsletters", newsletterRoutes);
 // ========================
 const startServer = async () => {
   try {
-    // Database Connection & Sync
     await initializeDatabase(); 
-
     const PORT = process.env.PORT || 5000;
-    const HOST = process.env.HOST || "0.0.0.0";
-
-    app.listen(PORT, HOST, () => {
-      console.log("--------------------------------------------------");
-      console.log(`✅ SERVER LIVE: http://localhost:${PORT}`);
-      console.log(`🚀 PROJECT: Tiny Town Kids Wear`);
-      console.log(`📂 MODE: ${process.env.NODE_ENV}`);
-      console.log("--------------------------------------------------");
-    });
+    if (process.env.NODE_ENV !== 'production') {
+      app.listen(PORT, () => {
+        console.log(`✅ Server running on port ${PORT}`);
+      });
+    }
   } catch (error) {
-    console.error("❌ Failed to start server:", error.message);
-    process.exit(1);
+    console.error("❌ Startup Error:", error.message);
   }
 };
 
 startServer();
-
 module.exports = app;
