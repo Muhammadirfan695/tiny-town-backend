@@ -19,6 +19,11 @@ router.get('/restaurant', apiKeyAuth, authorize('Admin', 'Manager', 'Owner', "Us
 
 router.get('/restaurant/:id', apiKeyAuth, authorize('Admin', 'Manager', 'Owner', "User"), getRestaurantById);
 
+router.get('/all', apiKeyAuth, getAllRestaurants);
+
+router.get('/all/:id', apiKeyAuth, getRestaurantById);
+
+
 router.patch(
     '/restaurant', apiKeyAuth,
     authorize('Admin', 'Manager', 'Owner'),
