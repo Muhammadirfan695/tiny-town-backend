@@ -44,39 +44,13 @@ app.get("/", (req, res) => {
   res.json({
     message: "🚀 Tiny Town API is running successfully",
     status: "Active",
-    env: process.env.NODE_ENV,
+    env: process.env.NODE_ENV || "production",
   });
 });
 
-const startServer = async () => {
-  let dbConnected = false;
-  
-  try {
-    const { initializeDatabase } = require("../config/db.js");
-    dbConnected = await initializeDatabase();
-  } catch (error) {
-    console.warn("⚠️ Database init failed:", error.message);
-  }
-  
-  const tinytownRoutes = require("../routes/tinytown.routes.js");
-  app.use("/api/tinytown", tinytownRoutes);
-  
-  if (dbConnected) {
-    console.log("✅ Database connected. Routes active.");
-  } else {
-    console.warn("⚠️ Database NOT connected. Routes active but DB operations will fail.");
-  }
-
-  if (process.env.NODE_ENV !== 'production') {
-    const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => {
-      console.log(`✅ Local Server running on port ${PORT}`);
-    });
-  }
-};
-
-startServer();
+// Load routes immediately
+const tinytownRoutes = require("../routes/tinytown.routes.js");
+app.use("/api/tinytown", tinytownRoutes);
 
 const server = app;
-
 module.exports = server;
