@@ -23,6 +23,11 @@ app.use((req, res, next) => {
   next();
 });
 
+// Test route - MUST be before other routes
+app.get("/test", (req, res) => {
+  res.json({ message: "test ok" });
+});
+
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
