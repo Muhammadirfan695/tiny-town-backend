@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const { apiKeyAuth } = require('../middlewares/auth.middleware');
 
 // In-memory storage for demo (no DB required)
 let products = [
@@ -11,7 +10,7 @@ let products = [
 
 let orders = [];
 
-// Public Routes - with mock data (bypass auth for demo)
+// Public Routes - NO auth required
 router.get('/products', (req, res) => {
   res.status(200).json({ success: true, data: products });
 });
@@ -20,17 +19,6 @@ router.post('/orders', (req, res) => {
   const order = { id: orders.length + 1, ...req.body, createdAt: new Date() };
   orders.push(order);
   res.status(201).json({ success: true, message: "Order placed!", data: order });
-});
-
-// Admin Routes (still require auth)
-router.post('/products', apiKeyAuth, (req, res) => {
-  const product = { id: products.length + 1, ...req.body };
-  products.push(product);
-  res.status(201).json({ success: true, message: "Product added!", data: product });
-});
-
-router.get('/orders', apiKeyAuth, (req, res) => {
-  res.status(200).json({ success: true, data: orders });
 });
 
 module.exports = router;
