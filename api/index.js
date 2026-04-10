@@ -21,15 +21,19 @@ if (allowedOrigins === "*") {
   allowedOrigins = "*";
 }
 
-const corsOptions = {
-  origin: allowedOrigins,
+app.use(cors({
+  origin: true, // Allow all origins in production
+  credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "x-api-key", "x-api-admin-key"],
-  credentials: true,
-};
-app.use(cors(corsOptions));
+}));
 
-app.options("*", cors(corsOptions));
+app.options("*", cors({
+  origin: true,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "x-api-key", "x-api-admin-key"],
+}));
 
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
