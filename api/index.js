@@ -57,28 +57,34 @@ app.get("/", (req, res) => {
 });
 
 const startServer = async () => {
+  let dbConnected = false;
+  
   try {
     const { initializeDatabase } = require("../config/db.js");
-    const dbConnected = await initializeDatabase();
-    
-    if (dbConnected) {
-      const tinytownRoutes = require("../routes/tinytown.routes.js");
-      app.use("/api/tinytown", tinytownRoutes);
-    } else {
-      console.warn("⚠️ Database not connected. Tinytown routes disabled.");
-    }
-
-    if (process.env.NODE_ENV !== 'production') {
-      const PORT = process.env.PORT || 5000;
-      app.listen(PORT, () => {
-        console.log(`✅ Local Server running on port ${PORT}`);
-      });
-    }
+    dbConnected = await initializeDatabase();
   } catch (error) {
-    console.error("❌ Startup Error:", error.message);
+    console.warn("⚠️ Database init failed:", error.message);
+  }
+  
+  const tinytownRoutes = require("../routes/tinytown.routes.js");
+  app.use("/api/tinytown", tinytownRoutes);
+  
+  if (dbConnected) {
+    console.log("✅ Database connected. Routes active.");
+  } else {
+    console.warn("⚠️ Database NOT connected. Routes active but DB operations will fail.");
+  }
+
+  if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+      console.log(`✅ Local Server running on port ${PORT}`);
+    });
   }
 };
 
 startServer();
 
-module.exports = app;
+const server = app;
+
+module.exports = server;
