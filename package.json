@@ -2,10 +2,11 @@
   "name": "localbites",
   "version": "1.0.0",
   "main": "api/index.js",
-  "scripts": {
+"scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "NODE_ENV=production node app.js",
-    "dev": "nodemon app.js",
+    "start": "NODE_ENV=production node api/index.js",
+    "build": "echo 'No build needed'", 
+    "dev": "nodemon api/index.js",
     "worker": "nodemon worker.js",
     "dev:all": "concurrently -n \"SERVER,WORKER\" -c \"green,blue\" \"npm run dev\" \"npm run worker\""
   },
