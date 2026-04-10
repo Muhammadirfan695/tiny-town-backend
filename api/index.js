@@ -1,6 +1,5 @@
 require("dotenv").config();
 const express = require("express");
-const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
@@ -12,28 +11,17 @@ app.use(helmet());
 app.use(express.json({ limit: `${process.env.MAX_FILE_SIZE || 50}mb` }));
 app.use(express.urlencoded({ extended: true }));
 
-let allowedOrigins = process.env.ALLOWED_ORIGINS || "*";
-if (allowedOrigins === "*") {
-  allowedOrigins = "*";
-} else if (allowedOrigins) {
-  allowedOrigins = allowedOrigins.split(",");
-} else {
-  allowedOrigins = "*";
-}
-
-app.use(cors({
-  origin: true, // Allow all origins in production
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "x-api-key", "x-api-admin-key"],
-}));
-
-app.options("*", cors({
-  origin: true,
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "x-api-key", "x-api-admin-key"],
-}));
+// CORS middleware - must be before routes
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, x-api-key, x-api-admin-key");
+  res.setHeader("Access-Control-Max-Age", "86400");
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
+  }
+  next();
+});
 
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
