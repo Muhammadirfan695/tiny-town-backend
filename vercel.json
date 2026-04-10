@@ -4,10 +4,26 @@
     {
       "src": "api/index.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "api/tinytown/products.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/tinytown/orders.js",
+      "use": "@vercel/node"
     }
   ],
   "installCommand": "npm install --include=prod",
   "routes": [
+    {
+      "src": "/api/tinytown/products",
+      "dest": "api/tinytown/products.js"
+    },
+    {
+      "src": "/api/tinytown/orders",
+      "dest": "api/tinytown/orders.js"
+    },
     {
       "src": "/api/(.*)",
       "dest": "api/index.js"
